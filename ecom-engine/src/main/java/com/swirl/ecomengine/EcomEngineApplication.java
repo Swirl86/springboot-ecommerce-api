@@ -1,4 +1,4 @@
-package com.swirl.ecom_engine;
+package com.swirl.ecomengine;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
