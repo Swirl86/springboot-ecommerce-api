@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.product;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,6 +31,11 @@ public class ProductController {
     @GetMapping("/{id}")
     public Product getProductById(@PathVariable Long id) {
         return productService.getProductById(id);
+    }
+
+    @PostMapping
+    public Product createProduct(@Valid @RequestBody ProductRequest request) {
+        return productService.createProduct(request);
     }
 }
 

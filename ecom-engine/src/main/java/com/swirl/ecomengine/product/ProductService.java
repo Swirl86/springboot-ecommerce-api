@@ -21,6 +21,16 @@ public class ProductService {
         return productRepository.findById(id).orElse(null);
     }
 
+    public Product createProduct(ProductRequest request) {
+        Product product = new Product(
+                null,
+                request.name(),
+                request.price(),
+                request.description()
+        );
+        return productRepository.save(product);
+    }
+
     public Product saveProduct(Product product) {
         return productRepository.save(product);
     }
