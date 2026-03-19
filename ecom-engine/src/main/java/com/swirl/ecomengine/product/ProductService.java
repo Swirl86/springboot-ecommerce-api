@@ -2,29 +2,26 @@ package com.swirl.ecomengine.product;
 
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class ProductService {
 
-    private final List<Product> products = new ArrayList<>();
+    private final ProductRepository productRepository;
 
-    public ProductService() {
-        // TODO : Remove Dummy data used for early testing
-        products.add(new Product(1L, "Laptop", 999.99, "Powerful laptop"));
-        products.add(new Product(2L, "Headphones", 199.99, "Noise cancelling headphones"));
-        products.add(new Product(3L, "Keyboard", 49.99, "Mechanical keyboard"));
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
     public List<Product> getAllProducts() {
-        return products;
+        return productRepository.findAll();
     }
 
     public Product getProductById(Long id) {
-        return products.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        return productRepository.findById(id).orElse(null);
+    }
+
+    public Product saveProduct(Product product) {
+        return productRepository.save(product);
     }
 }
