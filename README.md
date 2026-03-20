@@ -6,41 +6,6 @@ This project starts simple and will grow gradually, with many small and clear co
 
 ---
 
-## 🚀 Features (planned)
-
-- Core API
-    - Product model and domain structure
-    - Product listing and product details
-    - Basic CRUD operations
-    - Category support
-    - Search and filtering
-- User and Authentication
-- Shopping Flow
-- Data and Persistence
-- Testing
-    - Manual API testing with Postman
-    - Unit tests with JUnit and Mockito
-    - Integration tests with Spring Boot Test
-
----
-
-## 📦 Technologies
-
-| Layer / Concern        | Technologies                          |
-| ---------------------- | -------------------------------------- |
-| Language               | Java 21                                |
-| Framework              | Spring Boot 4                          |
-| API                    | Spring Web                             |
-| Architecture           | Layered design (Controller-Service-Repo) |
-| Data (planned)         | H2, PostgreSQL, Spring Data JPA        |
-| Auth (planned)         | Spring Security, JWT                   |
-| Build & Dependency     | Maven                                  |
-| Utilities              | Lombok, Spring Boot DevTools           |
-| Testing (planned)      | JUnit, Mockito, Spring Boot Test       |
-| Tooling                | IntelliJ IDEA                           |
-
----
-
 ## 📚 Project Goals
 
 - Improve backend development skills in Java
@@ -48,3 +13,65 @@ This project starts simple and will grow gradually, with many small and clear co
 - Build a realistic API with real-world patterns
 - Maintain a clear and readable commit history
 - Grow the project gradually in small steps
+  
+---
+
+## 📦 Technologies
+| Layer / Concern        | Technologies                                  |
+| ---------------------- | ---------------------------------------------- |
+| Language               | Java 17                                        |
+| Framework              | Spring Boot 3.2.5                              |
+| API                    | Spring Web (Spring MVC)                        |
+| Architecture           | Layered design (Controller → Service → Repo)   |
+| Data                   | H2 (dev), PostgreSQL (planned), Spring Data JPA |
+| Auth (planned)         | Spring Security, JWT                           |
+| Build & Dependency     | Maven                                          |
+| Utilities              | Lombok, Spring Boot DevTools                   |
+| Testing                | JUnit 5, Mockito, Spring Boot Test             |
+| Tooling                | IntelliJ IDEA                                  |
+
+---
+
+## 🚀 Features
+
+### ✅ Implemented
+- **Product Domain**
+  - Product entity (JPA)
+  - ProductRequest & ProductResponse DTOs
+  - ProductService with CRUD‑logik
+  - ProductController (REST API)
+  - H2 in‑memory database for development
+  - Unit tests (JUnit + Mockito)
+  - Integration tests (Spring Boot Test + TestRestTemplate)
+  
+##
+
+### 🛠️ Planned
+- **Product Enhancements**
+  - Category model & relations
+  - Pagination & sorting
+  - Search & filtering
+
+- **User & Authentication**
+  - User model
+  - Registration & login
+  - JWT authentication
+  - Role‑based authorization
+
+- **Shopping Flow**
+  - Cart
+  - Orders
+  - Checkout flow
+
+- **Data & Persistence**
+  - PostgreSQL support
+
+- **Testing Improvements**
+  - More integration tests
+  - Manual API testing with Postman
+  - Unit tests with JUnit + Mockito
+
+- **Tooling & Dev Experience**
+  - API documentation (Swagger / Springdoc)
+  - Docker support
+  - CI pipeline (GitHub Actions)
