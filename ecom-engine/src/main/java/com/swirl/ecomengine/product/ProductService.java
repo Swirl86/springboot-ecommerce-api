@@ -56,6 +56,31 @@ public class ProductService {
         );
     }
 
+    public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+
+        if (request.name() != null) product.setName(request.name());
+        if (request.price() != null) product.setPrice(request.price());
+        if (request.description() != null) product.setDescription(request.description());
+
+        Product updated = productRepository.save(product);
+
+        return new ProductResponse(
+                updated.getId(),
+                updated.getName(),
+                updated.getPrice(),
+                updated.getDescription()
+        );
+    }
+
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ProductNotFoundException(id);
+        }
+        productRepository.deleteById(id);
+    }
+
     // Only used by seed
     public void saveProduct(Product product) {
         productRepository.save(product);
