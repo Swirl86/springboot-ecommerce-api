@@ -16,7 +16,7 @@ public class ProductController {
     }
 
     @PostMapping("/seed")
-    public List<Product> seedProducts() {
+    public List<ProductResponse> seedProducts() {
         productService.saveProduct(new Product(null, "Laptop", 999.99, "Powerful laptop"));
         productService.saveProduct(new Product(null, "Headphones", 199.99, "Noise cancelling headphones"));
         productService.saveProduct(new Product(null, "Keyboard", 49.99, "Mechanical keyboard"));
@@ -24,18 +24,17 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<Product> getAllProducts() {
+    public List<ProductResponse> getAllProducts() {
         return productService.getAllProducts();
     }
 
     @GetMapping("/{id}")
-    public Product getProductById(@PathVariable Long id) {
+    public ProductResponse getProduct(@PathVariable Long id) {
         return productService.getProductById(id);
     }
 
     @PostMapping
-    public Product createProduct(@Valid @RequestBody ProductRequest request) {
+    public ProductResponse createProduct(@Valid @RequestBody ProductRequest request) {
         return productService.createProduct(request);
     }
 }
-

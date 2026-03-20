@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.product;
 
+import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,25 +14,50 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductResponse> getAllProducts() {
+        return productRepository.findAll()
+                .stream()
+                .map(product -> new ProductResponse(
+                        product.getId(),
+                        product.getName(),
+                        product.getPrice(),
+                        product.getDescription()
+                ))
+                .toList();
     }
 
-    public Product getProductById(Long id) {
-        return productRepository.findById(id).orElse(null);
+    public ProductResponse getProductById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
+
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getDescription()
+        );
     }
 
-    public Product createProduct(ProductRequest request) {
+    public ProductResponse createProduct(ProductRequest request) {
         Product product = new Product(
                 null,
                 request.name(),
                 request.price(),
                 request.description()
         );
-        return productRepository.save(product);
+
+        Product saved = productRepository.save(product);
+
+        return new ProductResponse(
+                saved.getId(),
+                saved.getName(),
+                saved.getPrice(),
+                saved.getDescription()
+        );
     }
 
-    public Product saveProduct(Product product) {
-        return productRepository.save(product);
+    // Only used by seed
+    public void saveProduct(Product product) {
+        productRepository.save(product);
     }
 }
