@@ -1,5 +1,8 @@
 package com.swirl.ecomengine.product;
 
+import com.swirl.ecomengine.category.CategoryRequest;
+import com.swirl.ecomengine.category.CategoryResponse;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +30,19 @@ class ProductIntegrationTest {
         baseUrl = "http://localhost:" + port;
     }
 
+    private Long createCategory() {
+        var req = new CategoryRequest("Electronics");
+        var res = rest.postForEntity(baseUrl + "/categories", req, CategoryResponse.class);
+        Assertions.assertNotNull(res.getBody());
+        return res.getBody().id();
+    }
+
     @Test
     void fullProductFlow() {
-        // 1. Create product
-        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop");
+        Long categoryId = createCategory();
+
+        ProductRequest request =
+                new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
         ResponseEntity<ProductResponse> createResponse =
                 rest.postForEntity(baseUrl + "/products", request, ProductResponse.class);
@@ -40,14 +52,12 @@ class ProductIntegrationTest {
         assertThat(created).isNotNull();
         Long id = created.id();
 
-        // 2. Get product by id
         ProductResponse getResponse =
                 rest.getForObject(baseUrl + "/products/" + id, ProductResponse.class);
 
         assertThat(getResponse.name()).isEqualTo("Laptop");
-        assertThat(getResponse.price()).isEqualTo(999.99);
+        assertThat(getResponse.categoryId()).isEqualTo(categoryId);
 
-        // 3. Get all products
         ResponseEntity<ProductResponse[]> listResponse =
                 rest.getForEntity(baseUrl + "/products", ProductResponse[].class);
 
@@ -57,20 +67,24 @@ class ProductIntegrationTest {
 
     @Test
     void updateProduct_updatesExistingProduct() {
-        // Create initial product
-        ProductRequest createReq = new ProductRequest("Laptop", 999.99, "Powerful laptop");
-        ProductResponse created = rest.postForEntity(baseUrl + "/products", createReq, ProductResponse.class).getBody();
-        assertThat(created).isNotNull();
+        Long categoryId = createCategory();
 
+        ProductRequest createReq =
+                new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
+
+        ProductResponse created =
+                rest.postForEntity(baseUrl + "/products", createReq, ProductResponse.class).getBody();
+
+        Assertions.assertNotNull(created);
         Long id = created.id();
 
-        // Update request
-        ProductRequest updateReq = new ProductRequest("Gaming Laptop", 1499.99, "Upgraded model");
+        ProductRequest updateReq =
+                new ProductRequest("Gaming Laptop", 1499.99, "Upgraded model", categoryId);
 
         rest.put(baseUrl + "/products/" + id, updateReq);
 
-        // Fetch updated product
-        ProductResponse updated = rest.getForObject(baseUrl + "/products/" + id, ProductResponse.class);
+        ProductResponse updated =
+                rest.getForObject(baseUrl + "/products/" + id, ProductResponse.class);
 
         assertThat(updated.name()).isEqualTo("Gaming Laptop");
         assertThat(updated.price()).isEqualTo(1499.99);
@@ -78,24 +92,21 @@ class ProductIntegrationTest {
 
     @Test
     void deleteProduct_removesProduct() {
-        // Create product
-        ProductRequest req = new ProductRequest("Laptop", 999.99, "Powerful laptop");
-        ProductResponse created = rest.postForEntity(baseUrl + "/products", req, ProductResponse.class).getBody();
-        assertThat(created).isNotNull();
+        Long categoryId = createCategory();
 
+        ProductRequest req =
+                new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
+
+        ProductResponse created =
+                rest.postForEntity(baseUrl + "/products", req, ProductResponse.class).getBody();
+
+        Assertions.assertNotNull(created);
         Long id = created.id();
 
-        // Delete
         rest.delete(baseUrl + "/products/" + id);
 
-        // Verify 404
-        ResponseEntity<String> response = rest.getForEntity(baseUrl + "/products/" + id, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    void getProduct_returns404_whenNotFound() {
-        ResponseEntity<String> response = rest.getForEntity(baseUrl + "/products/9999", String.class);
+        ResponseEntity<String> response =
+                rest.getForEntity(baseUrl + "/products/" + id, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }

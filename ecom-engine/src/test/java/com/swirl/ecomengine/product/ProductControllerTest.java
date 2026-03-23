@@ -30,12 +30,15 @@ class ProductControllerTest {
 
     @Test
     void getProduct_returns200() throws Exception {
-        ProductResponse response = new ProductResponse(1L, "Laptop", 999.99, "Powerful laptop");
+        ProductResponse response =
+                new ProductResponse(1L, "Laptop", 999.99, "Powerful laptop", 10L, "Electronics");
+
         when(productService.getProductById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/products/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Laptop"));
+                .andExpect(jsonPath("$.name").value("Laptop"))
+                .andExpect(jsonPath("$.categoryName").value("Electronics"));
     }
 
     @Test
@@ -48,8 +51,11 @@ class ProductControllerTest {
 
     @Test
     void createProduct_returns200() throws Exception {
-        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop");
-        ProductResponse response = new ProductResponse(1L, "Laptop", 999.99, "Powerful laptop");
+        ProductRequest request =
+                new ProductRequest("Laptop", 999.99, "Powerful laptop", 10L);
+
+        ProductResponse response =
+                new ProductResponse(1L, "Laptop", 999.99, "Powerful laptop", 10L, "Electronics");
 
         when(productService.createProduct(any())).thenReturn(response);
 
@@ -57,6 +63,7 @@ class ProductControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L));
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.categoryId").value(10L));
     }
 }
