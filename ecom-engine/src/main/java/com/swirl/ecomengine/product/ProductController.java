@@ -15,14 +15,6 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @PostMapping("/seed")
-    public List<ProductResponse> seedProducts() {
-        productService.saveProduct(new Product(null, "Laptop", 999.99, "Powerful laptop"));
-        productService.saveProduct(new Product(null, "Headphones", 199.99, "Noise cancelling headphones"));
-        productService.saveProduct(new Product(null, "Keyboard", 49.99, "Mechanical keyboard"));
-        return productService.getAllProducts();
-    }
-
     @GetMapping
     public List<ProductResponse> getAllProducts() {
         return productService.getAllProducts();

@@ -4,5 +4,7 @@ public record ProductResponse(
         Long id,
         String name,
         double price,
-        String description
+        String description,
+        Long categoryId,
+        String categoryName
 ) {}

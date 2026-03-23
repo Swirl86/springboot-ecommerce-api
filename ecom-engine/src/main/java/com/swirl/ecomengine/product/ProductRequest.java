@@ -10,6 +10,7 @@ public record ProductRequest(
         @Positive(message = "Price must be greater than 0")
         double price,
 
-        String description
+        String description,
+        Long categoryId
 ) {}
 

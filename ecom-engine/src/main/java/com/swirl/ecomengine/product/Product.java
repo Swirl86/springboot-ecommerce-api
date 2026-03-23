@@ -1,9 +1,7 @@
 package com.swirl.ecomengine.product;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.swirl.ecomengine.category.Category;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,4 +19,8 @@ public class Product {
     private String name;
     private double price;
     private String description;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 }
