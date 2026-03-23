@@ -56,13 +56,13 @@ public class ProductService {
         );
     }
 
-    public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
+    public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
-        if (request.name() != null) product.setName(request.name());
-        if (request.price() != null) product.setPrice(request.price());
-        if (request.description() != null) product.setDescription(request.description());
+        product.setName(request.name());
+        product.setPrice(request.price());
+        product.setDescription(request.description());
 
         Product updated = productRepository.save(product);
 
