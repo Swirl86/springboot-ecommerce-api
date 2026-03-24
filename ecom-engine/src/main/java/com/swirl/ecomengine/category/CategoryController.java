@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,9 @@ public class CategoryController {
         this.service = service;
     }
 
+    // ---------------------------------------------------------
+    // GET ALL
+    // ---------------------------------------------------------
     @Operation(summary = "Get all categories", description = "Returns all categories.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Categories retrieved successfully")
@@ -28,13 +32,16 @@ public class CategoryController {
         return service.getAll();
     }
 
+    // ---------------------------------------------------------
+    // CREATE
+    // ---------------------------------------------------------
     @Operation(summary = "Create a new category", description = "Creates a category. Name must be unique.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Category created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid category data")
     })
     @PostMapping
-    public CategoryResponse create(@RequestBody CategoryRequest request) {
+    public CategoryResponse create(@Valid @RequestBody CategoryRequest request) {
         return service.create(request);
     }
 }

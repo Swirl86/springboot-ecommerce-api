@@ -1,4 +1,9 @@
 package com.swirl.ecomengine.category;
 
-public record CategoryRequest(String name) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record CategoryRequest(
+        @NotBlank(message = "Category name cannot be empty")
+        String name
+) {}
 
