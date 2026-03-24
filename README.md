@@ -21,7 +21,7 @@ This project starts simple and will grow gradually, with many small and clear co
 | ---------------------- | ---------------------------------------------- |
 | Language               | Java 17                                        |
 | Framework              | Spring Boot 3.2.5                              |
-| API                    | Spring Web (Spring MVC)                        |
+| API                    | Spring Web (Spring MVC), Springdoc OpenAPI     |
 | Architecture           | Layered design (Controller → Service → Repo)   |
 | Data                   | H2 (dev), PostgreSQL (planned), Spring Data JPA |
 | Auth (planned)         | Spring Security, JWT                           |
@@ -35,43 +35,143 @@ This project starts simple and will grow gradually, with many small and clear co
 ## 🚀 Features
 
 ### ✅ Implemented
-- **Product Domain**
-  - Product entity (JPA)
-  - ProductRequest & ProductResponse DTOs
-  - ProductService with CRUD‑logik
-  - ProductController (REST API)
-  - H2 in‑memory database for development
-  - Unit tests (JUnit + Mockito)
-  - Integration tests (Spring Boot Test + TestRestTemplate)
+
+<details>
+  <summary><strong>Product Domain</strong></summary>
+
+- Product entity (JPA)
+- ProductRequest & ProductResponse DTOs
+- ProductService with CRUD logic
+- ProductController (REST API)
+- Unit tests (JUnit + Mockito)
+- Integration tests (Spring Boot Test + TestRestTemplate)
+
+</details>
+
+<details>
+  <summary><strong>Category Domain</strong></summary>
+
+- Category entity (JPA)
+- CategoryRequest & CategoryResponse DTOs
+- CategoryService with CRUD logic
+- CategoryController (REST API)
+- Integration with Product domain
+- Controller tests + integration tests
+
+</details>
+
+<details>
+  <summary><strong>API Documentation</strong></summary>
+
+- Added **OpenApiConfig** with API metadata
+- Swagger UI enabled via **Springdoc OpenAPI**
+- Controllers documented with:
+  - `@Tag`
+  - `@Operation`
+  - `@ApiResponses`
+- Easy-to-navigate interactive API documentation
+
+📄 **Swagger UI:**  
+http://localhost:8080/swagger-ui.html
+
+</details>
   
 ##
 
 ### 🛠️ Planned
-- **Product Enhancements**
-  - Category model & relations
-  - Pagination & sorting
-  - Search & filtering
 
-- **User & Authentication**
-  - User model
-  - Registration & login
-  - JWT authentication
-  - Role‑based authorization
+<details>
+  <summary><strong>Product Enhancements</strong></summary>
 
-- **Shopping Flow**
-  - Cart
-  - Orders
-  - Checkout flow
+- Pagination & sorting
+- Search & filtering
 
-- **Data & Persistence**
-  - PostgreSQL support
+</details>
 
-- **Testing Improvements**
-  - More integration tests
-  - Manual API testing with Postman
-  - Unit tests with JUnit + Mockito
+<details>
+  <summary><strong>User & Authentication</strong></summary>
 
-- **Tooling & Dev Experience**
-  - API documentation (Swagger / Springdoc)
-  - Docker support
-  - CI pipeline (GitHub Actions)
+- User model
+- Registration & login
+- JWT authentication
+- Role-based authorization
+
+</details>
+
+<details>
+  <summary><strong>Shopping Flow</strong></summary>
+
+- Cart
+- Orders
+- Checkout flow
+
+</details>
+
+<details>
+  <summary><strong>Data & Persistence</strong></summary>
+
+- PostgreSQL support
+
+</details>
+
+<details>
+  <summary><strong>Testing Improvements</strong></summary>
+
+- More integration tests
+- Test factories/builders
+- Manual API testing with Postman
+
+</details>
+
+<details>
+  <summary><strong>Tooling & Dev Experience</strong></summary>
+
+- Docker support
+- CI pipeline (GitHub Actions)
+- Extended API documentation (schemas, examples)
+
+</details>
+
+---
+
+## 📘 API Documentation (Swagger / OpenAPI)
+
+This project uses **Springdoc OpenAPI** to automatically generate API documentation.
+
+- Interactive UI  
+  👉 http://localhost:8080/swagger-ui.html
+
+- Configured in  
+  `OpenApiConfig.java`
+
+- Controllers are documented using:
+  - `@Tag` for grouping
+  - `@Operation` for summaries/descriptions
+  - `@ApiResponses` for status codes
+
+This makes the API easy to explore, test, and understand.
+
+---
+
+## 🧪 Testing
+
+- Unit tests for services and controllers
+- Integration tests for full request → database flow
+- Category and Product domains fully covered
+- Uses:
+  - `@WebMvcTest`
+  - `@SpringBootTest`
+  - `TestRestTemplate`
+  - Mockito
+
+---
+
+## 🧱 Architecture Overview
+
+Controller → Service → Repository → Database
+DTOs ↔ Entities
+
+GlobalExceptionHandler for consistent error responses
+
+The project follows a clean, layered structure to keep logic separated and maintainable.
+
