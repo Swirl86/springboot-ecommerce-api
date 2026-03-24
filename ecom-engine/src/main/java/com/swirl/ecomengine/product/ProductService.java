@@ -3,6 +3,9 @@ package com.swirl.ecomengine.product;
 import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.CategoryService;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,6 +51,27 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
         return toResponse(product);
+    }
+
+    // ---------------------------------------------------------
+    // SEARCH WITH FILTERS + PAGINATION + SORTING
+    // ---------------------------------------------------------
+    public Page<ProductResponse> searchProducts(
+            Long categoryId,
+            Double minPrice,
+            Double maxPrice,
+            String searchTerm,
+            Pageable pageable
+    ) {
+        Specification<Product> spec = Specification.where(null);
+
+        spec = spec.and(ProductSpecifications.withCategory(categoryId));
+        spec = spec.and(ProductSpecifications.withMinPrice(minPrice));
+        spec = spec.and(ProductSpecifications.withMaxPrice(maxPrice));
+        spec = spec.and(ProductSpecifications.withSearchTerm(searchTerm));
+
+        return productRepository.findAll(spec, pageable)
+                .map(this::toResponse);
     }
 
     // ---------------------------------------------------------

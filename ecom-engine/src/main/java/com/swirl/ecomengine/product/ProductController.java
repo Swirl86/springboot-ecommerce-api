@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +47,32 @@ public class ProductController {
     @GetMapping("/{id}")
     public ProductResponse getProduct(@PathVariable Long id) {
         return productService.getProductById(id);
+    }
+
+    // ---------------------------------------------------------
+    // GET PAGINATED + SORTED + FILTERED
+    // ---------------------------------------------------------
+    @Operation(
+            summary = "Get filtered, paginated and sorted products",
+            description = """
+                Supports:
+                - Pagination: ?page=0&size=10
+                - Sorting: ?sort=price,asc
+                - Filtering:
+                    ?categoryId=3
+                    ?minPrice=100&maxPrice=500
+                    ?q=laptop
+                """
+    )
+    @GetMapping("/search")
+    public Page<ProductResponse> searchProducts(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String q,
+            Pageable pageable
+    ) {
+        return productService.searchProducts(categoryId, minPrice, maxPrice, q, pageable);
     }
 
     // ---------------------------------------------------------
