@@ -18,29 +18,41 @@ public class ProductService {
         this.categoryService = categoryService;
     }
 
+    // ---------------------------------------------------------
+    // MAPPER: Entity -> Response DTO
+    // ---------------------------------------------------------
     private ProductResponse toResponse(Product p) {
         return new ProductResponse(
                 p.getId(),
                 p.getName(),
                 p.getPrice(),
                 p.getDescription(),
-                p.getCategory() != null ? p.getCategory().getId() : null,
-                p.getCategory() != null ? p.getCategory().getName() : null
+                p.getCategory().getId(),
+                p.getCategory().getName()
         );
     }
 
+    // ---------------------------------------------------------
+    // GET ALL
+    // ---------------------------------------------------------
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    // ---------------------------------------------------------
+    // GET BY ID
+    // ---------------------------------------------------------
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
         return toResponse(product);
     }
 
+    // ---------------------------------------------------------
+    // CREATE
+    // ---------------------------------------------------------
     public ProductResponse createProduct(ProductRequest request) {
         Category category = categoryService.getById(request.categoryId());
 
@@ -53,10 +65,12 @@ public class ProductService {
         );
 
         Product saved = productRepository.save(product);
-
         return toResponse(saved);
     }
 
+    // ---------------------------------------------------------
+    // UPDATE
+    // ---------------------------------------------------------
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
@@ -69,10 +83,12 @@ public class ProductService {
         product.setCategory(category);
 
         Product updated = productRepository.save(product);
-
         return toResponse(updated);
     }
 
+    // ---------------------------------------------------------
+    // DELETE
+    // ---------------------------------------------------------
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
             throw new ProductNotFoundException(id);
