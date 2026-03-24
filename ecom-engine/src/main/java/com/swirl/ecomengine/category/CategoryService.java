@@ -4,6 +4,7 @@ import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CategoryService {
@@ -20,6 +21,10 @@ public class CategoryService {
     public Category getById(Long id) {
         return repo.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException(id));
+    }
+
+    public Optional<Category> findByName(String name) {
+        return repo.findByNameIgnoreCase(name);
     }
 
     // ---------------------------------------------------------
