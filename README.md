@@ -1,4 +1,8 @@
-# Spring Boot E‑Commerce API
+# Spring Boot E-commerce API
+
+![CI](https://github.com/Swirl86/springboot-ecommerce-api/actions/workflows/ci.yml/badge.svg)
+![Java](https://img.shields.io/badge/Java-17-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen)
 
 **ecom-engine** is a backend e‑commerce API built with Spring Boot. The project is developed step by step with a focus on clean architecture, modular design, and modern Java practices. The goal is to strengthen my understanding of backend development by building a real-world style API from the ground up.
 
@@ -155,14 +159,22 @@ This makes the API easy to explore, test, and understand.
 
 ## 🧪 Testing
 
-- Unit tests for services and controllers
-- Integration tests for full request → database flow
-- Category and Product domains fully covered
+- Unit tests for services and controllers  
+- Integration tests for full request → database flow  
+- Category and Product domains fully covered  
 - Uses:
   - `@WebMvcTest`
   - `@SpringBootTest`
   - `TestRestTemplate`
   - Mockito
+
+### 📋 Useful commands to run tests from terminal
+
+| Command                         | Description                                      |
+|---------------------------------|--------------------------------------------------|
+| `mvn test`                      | Runs all unit and integration tests              |
+| `mvn verify`                    | Full build pipeline (compile + test + verify)    |
+| `cd ecom-engine && mvn test`    | Runs tests inside the ecom-engine module         |
 
 ---
 
