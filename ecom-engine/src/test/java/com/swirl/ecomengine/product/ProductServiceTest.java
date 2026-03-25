@@ -21,7 +21,8 @@ class ProductServiceTest {
     void setUp() {
         productRepository = mock(ProductRepository.class);
         categoryService = mock(CategoryService.class);
-        productService = new ProductService(productRepository, categoryService);
+        ProductMapper productMapper = new ProductMapper();
+        productService = new ProductService(productRepository, categoryService, productMapper);
     }
 
     @Test
