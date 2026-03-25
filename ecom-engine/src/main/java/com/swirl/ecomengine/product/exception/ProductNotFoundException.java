@@ -1,6 +1,8 @@
 package com.swirl.ecomengine.product.exception;
 
-public class ProductNotFoundException extends RuntimeException {
+import com.swirl.ecomengine.common.exception.NotFoundException;
+
+public class ProductNotFoundException extends NotFoundException {
     public ProductNotFoundException(Long id) {
         super("Product with id " + id + " not found");
     }

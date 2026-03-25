@@ -1,39 +1,90 @@
 package com.swirl.ecomengine.common.exception;
 
-import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
-import com.swirl.ecomengine.product.exception.ProductNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // -----------------------------
+    // Validation errors (400)
+    // -----------------------------
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationErrors(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request
+    ) {
         Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage())
         );
 
-        return ResponseEntity.badRequest().body(errors);
+        return ResponseEntity.badRequest().body(
+                new ErrorResponse(
+                        errors.toString(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
     }
 
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<?> handleProductNotFound(ProductNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", ex.getMessage()));
+    // -----------------------------
+    // Custom NotFound exceptions (404)
+    // -----------------------------
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(
+            NotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ErrorResponse(
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
     }
 
-    @ExceptionHandler(CategoryNotFoundException.class)
-    public ResponseEntity<?> handleCategoryNotFound(CategoryNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", ex.getMessage()));
+    // Catches JPA's own "not found"
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(
+            EntityNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ErrorResponse(
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // -----------------------------
+    // Data integrity (409)
+    // -----------------------------
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrity(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new ErrorResponse(
+                        "Data integrity violation: " + ex.getMostSpecificCause().getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
     }
 }
