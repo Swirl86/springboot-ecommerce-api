@@ -10,9 +10,11 @@ import java.util.Optional;
 public class CategoryService {
 
     private final CategoryRepository repo;
+    private final CategoryMapper mapper;
 
-    public CategoryService(CategoryRepository repo) {
+    public CategoryService(CategoryRepository repo, CategoryMapper mapper) {
         this.repo = repo;
+        this.mapper = mapper;
     }
 
     // ---------------------------------------------------------
@@ -30,9 +32,8 @@ public class CategoryService {
     // ---------------------------------------------------------
     // API: Return response DTO
     // ---------------------------------------------------------
-    public CategoryResponse getByIdResponse(Long id) {
-        Category category = getById(id);
-        return new CategoryResponse(category.getId(), category.getName());
+    public CategoryResponse getCategoryById(Long id) {
+        return mapper.toResponse(getById(id));
     }
 
     // ---------------------------------------------------------
@@ -40,7 +41,7 @@ public class CategoryService {
     // ---------------------------------------------------------
     public List<CategoryResponse> getAll() {
         return repo.findAll().stream()
-                .map(c -> new CategoryResponse(c.getId(), c.getName()))
+                .map(mapper::toResponse)
                 .toList();
     }
 
@@ -48,9 +49,8 @@ public class CategoryService {
     // CREATE
     // ---------------------------------------------------------
     public CategoryResponse create(CategoryRequest request) {
-        Category category = new Category(null, request.name());
-        Category saved = repo.save(category);
-        return new CategoryResponse(saved.getId(), saved.getName());
+        Category saved = repo.save(new Category(null, request.name()));
+        return mapper.toResponse(saved);
     }
 
     // ---------------------------------------------------------

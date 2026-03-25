@@ -43,8 +43,8 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Category not found")
     })
     @GetMapping("/{id}")
-    public CategoryResponse getById(@PathVariable Long id) {
-        return service.getByIdResponse(id);
+    public CategoryResponse getCategory(@PathVariable Long id) {
+        return service.getCategoryById(id);
     }
 
     // ---------------------------------------------------------

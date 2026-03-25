@@ -15,24 +15,22 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
+    private final ProductMapper mapper;
 
-    public ProductService(ProductRepository productRepository, CategoryService categoryService) {
+    public ProductService(ProductRepository productRepository,
+                          CategoryService categoryService,
+                          ProductMapper mapper) {
         this.productRepository = productRepository;
         this.categoryService = categoryService;
+        this.mapper = mapper;
     }
 
     // ---------------------------------------------------------
-    // MAPPER: Entity -> Response DTO
+    // INTERNAL: Return entity
     // ---------------------------------------------------------
-    private ProductResponse toResponse(Product p) {
-        return new ProductResponse(
-                p.getId(),
-                p.getName(),
-                p.getPrice(),
-                p.getDescription(),
-                p.getCategory().getId(),
-                p.getCategory().getName()
-        );
+    private Product getById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     // ---------------------------------------------------------
@@ -40,7 +38,7 @@ public class ProductService {
     // ---------------------------------------------------------
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
-                .map(this::toResponse)
+                .map(mapper::toResponse)
                 .toList();
     }
 
@@ -48,9 +46,7 @@ public class ProductService {
     // GET BY ID
     // ---------------------------------------------------------
     public ProductResponse getProductById(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
-        return toResponse(product);
+        return mapper.toResponse(getById(id));
     }
 
     // ---------------------------------------------------------
@@ -71,7 +67,7 @@ public class ProductService {
         spec = spec.and(ProductSpecifications.withSearchTerm(searchTerm));
 
         return productRepository.findAll(spec, pageable)
-                .map(this::toResponse);
+                .map(mapper::toResponse);
     }
 
     // ---------------------------------------------------------
@@ -89,15 +85,14 @@ public class ProductService {
         );
 
         Product saved = productRepository.save(product);
-        return toResponse(saved);
+        return mapper.toResponse(saved);
     }
 
     // ---------------------------------------------------------
     // UPDATE
     // ---------------------------------------------------------
     public ProductResponse updateProduct(Long id, ProductRequest request) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(id));
+        Product product = getById(id);
 
         product.setName(request.name());
         product.setPrice(request.price());
@@ -107,7 +102,7 @@ public class ProductService {
         product.setCategory(category);
 
         Product updated = productRepository.save(product);
-        return toResponse(updated);
+        return mapper.toResponse(updated);
     }
 
     // ---------------------------------------------------------
