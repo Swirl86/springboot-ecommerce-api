@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.category;
 
+import com.swirl.ecomengine.product.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +21,20 @@ class CategoryIntegrationTest {
     @Autowired
     private TestRestTemplate rest;
 
-    private String baseUrl;
+    @Autowired
+    private ProductRepository productRepository;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    private String baseUrl;
+    
     @BeforeEach
     void setup() {
         baseUrl = "http://localhost:" + port;
+
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
     }
 
     @Test
@@ -34,7 +44,8 @@ class CategoryIntegrationTest {
         ResponseEntity<CategoryResponse> createResponse =
                 rest.postForEntity(baseUrl + "/categories", request, CategoryResponse.class);
 
-        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
         CategoryResponse created = createResponse.getBody();
         assertThat(created).isNotNull();
         assertThat(created.name()).isEqualTo("Electronics");

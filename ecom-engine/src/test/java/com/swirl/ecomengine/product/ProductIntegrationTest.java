@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.product;
 
+import com.swirl.ecomengine.category.CategoryRepository;
 import com.swirl.ecomengine.category.CategoryRequest;
 import com.swirl.ecomengine.category.CategoryResponse;
 import org.junit.jupiter.api.Assertions;
@@ -23,11 +24,20 @@ class ProductIntegrationTest {
     @Autowired
     private TestRestTemplate rest;
 
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     private String baseUrl;
 
     @BeforeEach
     void setup() {
         baseUrl = "http://localhost:" + port;
+
+        productRepository.deleteAll();
+        categoryRepository.deleteAll();
     }
 
     private Long createCategory() {
@@ -47,7 +57,8 @@ class ProductIntegrationTest {
         ResponseEntity<ProductResponse> createResponse =
                 rest.postForEntity(baseUrl + "/products", request, ProductResponse.class);
 
-        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
         ProductResponse created = createResponse.getBody();
         assertThat(created).isNotNull();
         Long id = created.id();
