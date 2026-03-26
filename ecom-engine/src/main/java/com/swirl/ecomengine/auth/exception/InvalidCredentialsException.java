@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.common.exception;
+package com.swirl.ecomengine.auth.exception;
 
 public class InvalidCredentialsException extends RuntimeException {
     public InvalidCredentialsException() {
