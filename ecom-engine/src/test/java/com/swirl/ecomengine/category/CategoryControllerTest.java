@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -29,6 +30,7 @@ class CategoryControllerTest {
     private CategoryService categoryService;
 
     @Test
+    @WithMockUser(roles = "USER")
     void getAllCategories_returns200() throws Exception {
         List<CategoryResponse> categories = List.of(
                 new CategoryResponse(1L, "Electronics"),
@@ -44,6 +46,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createCategory_returns200() throws Exception {
         CategoryRequest request = new CategoryRequest("Electronics");
         CategoryResponse response = new CategoryResponse(1L, "Electronics");

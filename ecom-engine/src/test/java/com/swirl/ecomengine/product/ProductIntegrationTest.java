@@ -42,7 +42,10 @@ class ProductIntegrationTest {
 
     private Long createCategory() {
         var req = new CategoryRequest("Electronics");
-        var res = rest.postForEntity(baseUrl + "/categories", req, CategoryResponse.class);
+
+        var res = rest.withBasicAuth("admin", "admin")
+                .postForEntity(baseUrl + "/categories", req, CategoryResponse.class);
+
         Assertions.assertNotNull(res.getBody());
         return res.getBody().id();
     }
@@ -55,7 +58,8 @@ class ProductIntegrationTest {
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
         ResponseEntity<ProductResponse> createResponse =
-                rest.postForEntity(baseUrl + "/products", request, ProductResponse.class);
+                rest.withBasicAuth("admin", "admin")
+                        .postForEntity(baseUrl + "/products", request, ProductResponse.class);
 
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
@@ -64,13 +68,15 @@ class ProductIntegrationTest {
         Long id = created.id();
 
         ProductResponse getResponse =
-                rest.getForObject(baseUrl + "/products/" + id, ProductResponse.class);
+                rest.withBasicAuth("admin", "admin")
+                        .getForObject(baseUrl + "/products/" + id, ProductResponse.class);
 
         assertThat(getResponse.name()).isEqualTo("Laptop");
         assertThat(getResponse.categoryId()).isEqualTo(categoryId);
 
         ResponseEntity<ProductResponse[]> listResponse =
-                rest.getForEntity(baseUrl + "/products", ProductResponse[].class);
+                rest.withBasicAuth("admin", "admin")
+                        .getForEntity(baseUrl + "/products", ProductResponse[].class);
 
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody()).isNotEmpty();
@@ -84,7 +90,9 @@ class ProductIntegrationTest {
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
         ProductResponse created =
-                rest.postForEntity(baseUrl + "/products", createReq, ProductResponse.class).getBody();
+                rest.withBasicAuth("admin", "admin")
+                        .postForEntity(baseUrl + "/products", createReq, ProductResponse.class)
+                        .getBody();
 
         Assertions.assertNotNull(created);
         Long id = created.id();
@@ -92,10 +100,12 @@ class ProductIntegrationTest {
         ProductRequest updateReq =
                 new ProductRequest("Gaming Laptop", 1499.99, "Upgraded model", categoryId);
 
-        rest.put(baseUrl + "/products/" + id, updateReq);
+        rest.withBasicAuth("admin", "admin")
+                .put(baseUrl + "/products/" + id, updateReq);
 
         ProductResponse updated =
-                rest.getForObject(baseUrl + "/products/" + id, ProductResponse.class);
+                rest.withBasicAuth("admin", "admin")
+                        .getForObject(baseUrl + "/products/" + id, ProductResponse.class);
 
         assertThat(updated.name()).isEqualTo("Gaming Laptop");
         assertThat(updated.price()).isEqualTo(1499.99);
@@ -109,15 +119,19 @@ class ProductIntegrationTest {
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
         ProductResponse created =
-                rest.postForEntity(baseUrl + "/products", req, ProductResponse.class).getBody();
+                rest.withBasicAuth("admin", "admin")
+                        .postForEntity(baseUrl + "/products", req, ProductResponse.class)
+                        .getBody();
 
         Assertions.assertNotNull(created);
         Long id = created.id();
 
-        rest.delete(baseUrl + "/products/" + id);
+        rest.withBasicAuth("admin", "admin")
+                .delete(baseUrl + "/products/" + id);
 
         ResponseEntity<String> response =
-                rest.getForEntity(baseUrl + "/products/" + id, String.class);
+                rest.withBasicAuth("admin", "admin")
+                        .getForEntity(baseUrl + "/products/" + id, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }

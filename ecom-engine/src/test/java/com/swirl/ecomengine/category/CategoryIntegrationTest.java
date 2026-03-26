@@ -28,7 +28,7 @@ class CategoryIntegrationTest {
     private CategoryRepository categoryRepository;
 
     private String baseUrl;
-    
+
     @BeforeEach
     void setup() {
         baseUrl = "http://localhost:" + port;
@@ -42,7 +42,8 @@ class CategoryIntegrationTest {
         CategoryRequest request = new CategoryRequest("Electronics");
 
         ResponseEntity<CategoryResponse> createResponse =
-                rest.postForEntity(baseUrl + "/categories", request, CategoryResponse.class);
+                rest.withBasicAuth("admin", "admin")
+                        .postForEntity(baseUrl + "/categories", request, CategoryResponse.class);
 
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
@@ -51,7 +52,8 @@ class CategoryIntegrationTest {
         assertThat(created.name()).isEqualTo("Electronics");
 
         ResponseEntity<CategoryResponse[]> listResponse =
-                rest.getForEntity(baseUrl + "/categories", CategoryResponse[].class);
+                rest.withBasicAuth("admin", "admin")
+                        .getForEntity(baseUrl + "/categories", CategoryResponse[].class);
 
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody()).isNotEmpty();

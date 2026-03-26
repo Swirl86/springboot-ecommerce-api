@@ -8,8 +8,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -29,6 +29,7 @@ class ProductControllerTest {
     private ProductService productService;
 
     @Test
+    @WithMockUser(roles = "USER")
     void getProduct_returns200() throws Exception {
         ProductResponse response =
                 new ProductResponse(1L, "Laptop", 999.99, "Powerful laptop", 10L, "Electronics");
@@ -42,6 +43,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void getProduct_returns404_whenNotFound() throws Exception {
         when(productService.getProductById(1L)).thenThrow(new ProductNotFoundException(1L));
 
@@ -50,6 +52,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void createProduct_returns200() throws Exception {
         ProductRequest request =
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", 10L);
