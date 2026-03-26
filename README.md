@@ -157,6 +157,30 @@ This makes the API easy to explore, test, and understand.
 
 ---
 
+## 🔧 Managing Spring Profiles
+
+The application determines its active profile through the `SPRING_PROFILES_ACTIVE` environment variable. This avoids hard‑coding a profile in `application.yml` and allows each environment to load the correct configuration.
+
+This ensures that each environment loads the correct configuration:
+
+- **Development** → `application-dev.yml`  
+- **Testing** → `@ActiveProfiles("test")` + `application-test.properties`  
+- **Production** → `application-prod.yml`  
+
+This also prevents development‑only components annotated with `@Profile("dev")` (such as the `DataSeeder`) from running during tests or in production.
+
+##
+
+### 🖥️ Setting the Profile in IntelliJ (Run Configuration)
+
+1. Open **Run → Edit Configurations**
+2. At **Environment variables**, add:
+`SPRING_PROFILES_ACTIVE=dev`
+
+This activates the `dev` profile whenever the application is started from the IDE.
+
+---
+
 ## 🧪 Testing
 
 - Unit tests for services and controllers  
