@@ -1,8 +1,10 @@
 package com.swirl.ecomengine.category;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swirl.ecomengine.security.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -17,7 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CategoryController.class)
-@Import(org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration.class)
+@Import({ValidationAutoConfiguration.class, TestSecurityConfig.class})
 class CategoryControllerTest {
 
     @Autowired

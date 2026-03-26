@@ -3,6 +3,7 @@ package com.swirl.ecomengine.product;
 import com.swirl.ecomengine.category.CategoryRepository;
 import com.swirl.ecomengine.category.CategoryRequest;
 import com.swirl.ecomengine.category.CategoryResponse;
+import com.swirl.ecomengine.security.TestSecurityConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,12 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 class ProductIntegrationTest {
 
     @LocalServerPort
