@@ -1,3 +1,6 @@
 spring:
   application:
     name: ecom-engine
+springdoc:
+  swagger-ui:
+    operationsSorter: method
