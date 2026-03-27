@@ -3,6 +3,7 @@ package com.swirl.ecomengine.common.exception;
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
 import com.swirl.ecomengine.auth.exception.JwtValidationException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +18,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // -----------------------------
-    // Validation errors (400)
-    // -----------------------------
+    // ============================================================
+    // 400 — Validation errors (@Valid)
+    // ============================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(
             MethodArgumentNotValidException ex,
@@ -42,9 +42,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // -----------------------------
-    // Custom NotFound exceptions (404)
-    // -----------------------------
+    // ============================================================
+    // 404 — Custom NotFound exceptions
+    // ============================================================
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(
             NotFoundException ex,
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // JPA's own "not found"
+    // JPA's own "not found" (e.g. getReferenceById)
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(
             EntityNotFoundException ex,
@@ -76,9 +76,43 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // -----------------------------
-    // Data integrity (409)
-    // -----------------------------
+    // ============================================================
+    // 400 — Custom BadRequest exceptions
+    // ============================================================
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequest(
+            BadRequestException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.badRequest().body(
+                new ErrorResponse(
+                        HttpStatus.BAD_REQUEST.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // ============================================================
+    // 409 — Custom Conflict exceptions (e.g. duplicates)
+    // ============================================================
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(
+            ConflictException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new ErrorResponse(
+                        HttpStatus.CONFLICT.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // Database-level constraint violations (unique keys, FK, etc.)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(
             DataIntegrityViolationException ex,
@@ -94,9 +128,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // -----------------------------
-    // Invalid login (401)
-    // -----------------------------
+    // ============================================================
+    // 401 — Authentication failures
+    // ============================================================
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(
             InvalidCredentialsException ex,
@@ -112,9 +146,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // -----------------------------
-    // Invalid or expired JWT (401)
-    // -----------------------------
     @ExceptionHandler(JwtValidationException.class)
     public ResponseEntity<ErrorResponse> handleJwtValidation(
             JwtValidationException ex,
@@ -123,6 +154,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 new ErrorResponse(
                         HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // ============================================================
+    // 500 — Unexpected server errors
+    // Catches any unhandled exception to prevent raw stack traces
+    // from leaking to the client and ensures a consistent error format.
+    // ============================================================
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ErrorResponse(
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
                         request.getRequestURI()

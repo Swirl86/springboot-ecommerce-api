@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.product;
+package com.swirl.ecomengine.product.dto;
 
 public record ProductResponse(
         Long id,

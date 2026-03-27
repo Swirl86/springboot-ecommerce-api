@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.category;
 
+import com.swirl.ecomengine.category.dto.CategoryResponse;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,5 +1,7 @@
 package com.swirl.ecomengine.category;
 
+import com.swirl.ecomengine.category.dto.CategoryRequest;
+import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
 import org.springframework.stereotype.Service;
 

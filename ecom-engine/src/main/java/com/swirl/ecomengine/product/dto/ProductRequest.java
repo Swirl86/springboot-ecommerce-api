@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.product;
+package com.swirl.ecomengine.product.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

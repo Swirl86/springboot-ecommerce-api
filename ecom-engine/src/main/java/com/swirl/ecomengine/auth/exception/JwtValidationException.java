@@ -1,7 +1,9 @@
 package com.swirl.ecomengine.auth.exception;
 
-public class JwtValidationException extends RuntimeException {
+import com.swirl.ecomengine.common.exception.BadRequestException;
+
+public class JwtValidationException extends BadRequestException {
     public JwtValidationException(Throwable cause) {
-        super("Invalid JWT token", cause);
+        super("Invalid JWT token");
     }
 }

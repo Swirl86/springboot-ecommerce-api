@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.category;
+package com.swirl.ecomengine.category.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

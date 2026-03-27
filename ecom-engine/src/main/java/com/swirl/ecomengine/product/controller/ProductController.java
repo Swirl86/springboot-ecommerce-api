@@ -1,5 +1,8 @@
-package com.swirl.ecomengine.product;
+package com.swirl.ecomengine.product.controller;
 
+import com.swirl.ecomengine.product.ProductService;
+import com.swirl.ecomengine.product.dto.ProductRequest;
+import com.swirl.ecomengine.product.dto.ProductResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

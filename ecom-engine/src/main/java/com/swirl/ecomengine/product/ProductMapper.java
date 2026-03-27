@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.product;
 
+import com.swirl.ecomengine.product.dto.ProductResponse;
 import org.springframework.stereotype.Component;
 
 @Component

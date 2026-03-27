@@ -1,9 +1,9 @@
 package com.swirl.ecomengine.config;
 
 import com.swirl.ecomengine.category.Category;
-import com.swirl.ecomengine.category.CategoryRequest;
+import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.CategoryService;
-import com.swirl.ecomengine.product.ProductRequest;
+import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.ProductService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
