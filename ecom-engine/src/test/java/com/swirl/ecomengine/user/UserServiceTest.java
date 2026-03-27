@@ -1,6 +1,6 @@
 package com.swirl.ecomengine.user;
 
-import com.swirl.ecomengine.common.exception.EmailAlreadyExistsException;
+import com.swirl.ecomengine.user.exception.EmailAlreadyExistsException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

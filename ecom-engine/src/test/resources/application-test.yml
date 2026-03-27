@@ -1,0 +1,45 @@
+# -----------------------------
+# Test database configuration
+# Uses in-memory H2 for fast, isolated test runs
+# -----------------------------
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: sa
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop   # Recreate schema for each test run
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false           # Disable SQL logging during tests
+
+  # -----------------------------
+  # Built-in Spring Security test user
+  # Only used if TestSecurityConfig does NOT override security
+  # -----------------------------
+  security:
+    user:
+      name: admin
+      password: admin
+      roles: ADMIN
+
+# -----------------------------
+# Fake JWT configuration for test environment
+# Ensures JwtService can initialize without real secrets
+# -----------------------------
+jwt:
+  secret: "test-secret-test-secret-test-secret-123456"
+  expiration: 3600000   # 1 hour
+
+# -----------------------------
+# Logging configuration for cleaner test output
+# -----------------------------
+logging:
+  level:
+    root: WARN
+    org.springframework.test: INFO
+    com.swirl.ecomengine: DEBUG
