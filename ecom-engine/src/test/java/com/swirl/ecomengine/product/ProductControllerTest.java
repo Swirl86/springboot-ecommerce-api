@@ -1,6 +1,9 @@
 package com.swirl.ecomengine.product;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swirl.ecomengine.product.controller.ProductController;
+import com.swirl.ecomengine.product.dto.ProductRequest;
+import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import com.swirl.ecomengine.security.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
@@ -11,6 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.*;
@@ -19,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ProductController.class)
 @Import({ValidationAutoConfiguration.class, TestSecurityConfig.class})
+@ActiveProfiles("test")
 class ProductControllerTest {
 
     @Autowired
@@ -30,6 +35,9 @@ class ProductControllerTest {
     @MockBean
     private ProductService productService;
 
+    // ------------------------------------------------------------
+    // GET /products/{id} — 200 OK
+    // ------------------------------------------------------------
     @Test
     @WithMockUser(roles = "USER")
     void getProduct_returns200() throws Exception {
@@ -44,18 +52,28 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.categoryName").value("Electronics"));
     }
 
+    // ------------------------------------------------------------
+    // GET /products/{id} — 404 Not Found
+    // ------------------------------------------------------------
     @Test
     @WithMockUser(roles = "USER")
     void getProduct_returns404_whenNotFound() throws Exception {
-        when(productService.getProductById(1L)).thenThrow(new ProductNotFoundException(1L));
+        when(productService.getProductById(1L))
+                .thenThrow(new ProductNotFoundException(1L));
 
         mockMvc.perform(get("/products/1"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Product with id 1 not found"))
+                .andExpect(jsonPath("$.path").value("/products/1"));
     }
 
+    // ------------------------------------------------------------
+    // POST /products — 201 Created
+    // ------------------------------------------------------------
     @Test
     @WithMockUser(roles = "ADMIN")
-    void createProduct_returns200() throws Exception {
+    void createProduct_returns201() throws Exception {
         ProductRequest request =
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", 10L);
 

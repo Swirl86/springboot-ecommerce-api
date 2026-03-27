@@ -1,5 +1,7 @@
 package com.swirl.ecomengine.category;
 
+import com.swirl.ecomengine.category.dto.CategoryRequest;
+import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.product.ProductRepository;
 import com.swirl.ecomengine.security.TestSecurityConfig;
 import org.junit.jupiter.api.BeforeEach;

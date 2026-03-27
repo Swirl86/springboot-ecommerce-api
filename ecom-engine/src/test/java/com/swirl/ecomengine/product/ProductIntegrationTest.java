@@ -1,8 +1,10 @@
 package com.swirl.ecomengine.product;
 
 import com.swirl.ecomengine.category.CategoryRepository;
-import com.swirl.ecomengine.category.CategoryRequest;
-import com.swirl.ecomengine.category.CategoryResponse;
+import com.swirl.ecomengine.category.dto.CategoryRequest;
+import com.swirl.ecomengine.category.dto.CategoryResponse;
+import com.swirl.ecomengine.product.dto.ProductRequest;
+import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.security.TestSecurityConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
