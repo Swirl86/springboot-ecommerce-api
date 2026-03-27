@@ -1,5 +1,7 @@
 package com.swirl.ecomengine.common.exception;
 
+import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
+import com.swirl.ecomengine.auth.exception.JwtValidationException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(
                 new ErrorResponse(
+                        HttpStatus.BAD_REQUEST.value(),
                         errors.toString(),
                         LocalDateTime.now(),
                         request.getRequestURI()
@@ -49,6 +52,7 @@ public class GlobalExceptionHandler {
     ) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 new ErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
                         request.getRequestURI()
@@ -56,7 +60,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // Catches JPA's own "not found"
+    // JPA's own "not found"
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(
             EntityNotFoundException ex,
@@ -64,6 +68,7 @@ public class GlobalExceptionHandler {
     ) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 new ErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
                         request.getRequestURI()
@@ -81,7 +86,44 @@ public class GlobalExceptionHandler {
     ) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
                 new ErrorResponse(
+                        HttpStatus.CONFLICT.value(),
                         "Data integrity violation: " + ex.getMostSpecificCause().getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // -----------------------------
+    // Invalid login (401)
+    // -----------------------------
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(
+            InvalidCredentialsException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new ErrorResponse(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // -----------------------------
+    // Invalid or expired JWT (401)
+    // -----------------------------
+    @ExceptionHandler(JwtValidationException.class)
+    public ResponseEntity<ErrorResponse> handleJwtValidation(
+            JwtValidationException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new ErrorResponse(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
                         LocalDateTime.now(),
                         request.getRequestURI()
                 )

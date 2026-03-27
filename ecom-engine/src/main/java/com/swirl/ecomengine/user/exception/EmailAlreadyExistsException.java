@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.common.exception;
+package com.swirl.ecomengine.user.exception;
 
 public class EmailAlreadyExistsException extends RuntimeException {
     public EmailAlreadyExistsException(String email) {

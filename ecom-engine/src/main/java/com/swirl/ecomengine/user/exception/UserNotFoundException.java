@@ -1,4 +1,6 @@
-package com.swirl.ecomengine.common.exception;
+package com.swirl.ecomengine.user.exception;
+
+import com.swirl.ecomengine.common.exception.NotFoundException;
 
 public class UserNotFoundException extends NotFoundException {
     public UserNotFoundException(String email) {

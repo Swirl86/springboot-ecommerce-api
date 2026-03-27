@@ -11,3 +11,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+
+# JWT configuration for dev environment
+jwt:
+  secret: "dev-secret-key-change-me"
+  expiration: 3600000   # 1 hour

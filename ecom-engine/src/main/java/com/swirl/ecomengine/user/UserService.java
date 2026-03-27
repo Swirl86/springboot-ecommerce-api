@@ -1,6 +1,6 @@
 package com.swirl.ecomengine.user;
 
-import com.swirl.ecomengine.common.exception.EmailAlreadyExistsException;
+import com.swirl.ecomengine.user.exception.EmailAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;

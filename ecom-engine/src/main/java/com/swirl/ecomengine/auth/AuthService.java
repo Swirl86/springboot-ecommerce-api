@@ -3,6 +3,7 @@ package com.swirl.ecomengine.auth;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.LoginResponse;
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
+import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;

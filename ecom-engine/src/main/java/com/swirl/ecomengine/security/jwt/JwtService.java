@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.auth;
+package com.swirl.ecomengine.security.jwt;
 
 import com.swirl.ecomengine.auth.exception.JwtValidationException;
 import com.swirl.ecomengine.user.User;
