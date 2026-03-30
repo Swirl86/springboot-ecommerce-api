@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -51,8 +52,9 @@ public class CategoryController {
     }
 
     // ---------------------------------------------------------
-    // CREATE
+    // CREATE (ADMIN ONLY)
     // ---------------------------------------------------------
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new category", description = "Creates a category. Name must be unique.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Category created successfully"),
@@ -65,8 +67,9 @@ public class CategoryController {
     }
 
     // ---------------------------------------------------------
-    // UPDATE
+    // UPDATE (ADMIN ONLY)
     // ---------------------------------------------------------
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update an existing category", description = "Updates category name.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Category updated successfully"),
@@ -82,8 +85,9 @@ public class CategoryController {
     }
 
     // ---------------------------------------------------------
-    // DELETE
+    // DELETE (ADMIN ONLY)
     // ---------------------------------------------------------
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a category", description = "Deletes a category by ID.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Category deleted successfully"),

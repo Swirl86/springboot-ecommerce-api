@@ -26,14 +26,27 @@ public class JwtService {
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
+                .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    public String extractRole(String token) {
+        try {
+            return extractClaims(token).get("role", String.class);
+        } catch (Exception e) {
+            throw new JwtValidationException("Invalid or missing role claim", e);
+        }
+    }
+
     public String extractEmail(String token) {
-        return extractClaims(token).getSubject();
+        try {
+            return extractClaims(token).getSubject();
+        } catch (Exception e) {
+            throw new JwtValidationException("Invalid token subject", e);
+        }
     }
 
     public boolean validateToken(String token) {
@@ -41,7 +54,7 @@ public class JwtService {
             extractClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            throw new JwtValidationException(e);
+            throw new JwtValidationException("JWT validation failed", e);
         }
     }
 

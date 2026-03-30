@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -79,8 +80,9 @@ public class ProductController {
     }
 
     // ---------------------------------------------------------
-    // CREATE
+    // CREATE (ADMIN ONLY)
     // ---------------------------------------------------------
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new product", description = "Creates a product and assigns it to a category.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Product created successfully"),
@@ -93,8 +95,9 @@ public class ProductController {
     }
 
     // ---------------------------------------------------------
-    // UPDATE
+    // UPDATE (ADMIN ONLY)
     // ---------------------------------------------------------
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update an existing product", description = "Updates product fields and category.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Product updated successfully"),
@@ -110,8 +113,9 @@ public class ProductController {
     }
 
     // ---------------------------------------------------------
-    // DELETE
+    // DELETE (ADMIN ONLY)
     // ---------------------------------------------------------
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete a product", description = "Deletes a product by ID.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Product deleted successfully"),
