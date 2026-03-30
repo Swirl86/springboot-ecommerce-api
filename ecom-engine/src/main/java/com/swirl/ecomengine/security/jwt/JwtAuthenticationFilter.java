@@ -1,6 +1,5 @@
 package com.swirl.ecomengine.security.jwt;
 
-import com.swirl.ecomengine.auth.exception.JwtValidationException;
 import com.swirl.ecomengine.user.CustomUserDetails;
 import com.swirl.ecomengine.user.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -11,11 +10,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -27,71 +28,82 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-
-        // No token → continue filter chain
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // Skip JWT filter for public endpoints
+        if (isPublicEndpoint(request)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
+        String token = extractToken(request);
+        if (token == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-        // Extract role from JWT
-        String role;
         try {
-            role = jwtService.extractRole(token);
-        } catch (Exception e) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+            jwtService.validateToken(token);
 
-        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+            String email = jwtService.extractEmail(token);
+            String role = jwtService.extractRole(token);
 
-        String email;
-        try {
-            email = jwtService.extractEmail(token);
-        } catch (JwtValidationException e) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // Only authenticate if no one is already authenticated
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            var user = userRepository.findByEmail(email).orElse(null);
-            if (user == null) {
+            if (email == null || role == null || isAlreadyAuthenticated()) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            try {
-                jwtService.validateToken(token);
-            } catch (JwtValidationException e) {
-                filterChain.doFilter(request, response);
-                return;
-            }
+            userRepository.findByEmail(email).ifPresent(user -> {
+                var auth = buildAuthentication(user, role, request);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            });
 
-            var userDetails = new CustomUserDetails(user);
-
-            var authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    authorities
-            );
-
-            authToken.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request)
-            );
-
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+        } catch (Exception ignored) {
+            // Invalid token → SecurityConfig handles 401
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    // ------------------------------------------------------------
+    // Helper methods
+    // ------------------------------------------------------------
+
+    private boolean isPublicEndpoint(HttpServletRequest request) {
+        return request.getServletPath().startsWith("/auth");
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            return null;
+        }
+        return header.substring(7);
+    }
+
+    private boolean isAlreadyAuthenticated() {
+        return SecurityContextHolder.getContext().getAuthentication() != null;
+    }
+
+    private UsernamePasswordAuthenticationToken buildAuthentication(
+            com.swirl.ecomengine.user.User user,
+            String role,
+            HttpServletRequest request
+    ) {
+        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        var userDetails = new CustomUserDetails(user);
+
+        var auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                authorities
+        );
+
+        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        return auth;
     }
 }

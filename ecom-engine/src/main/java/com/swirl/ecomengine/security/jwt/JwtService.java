@@ -2,8 +2,12 @@ package com.swirl.ecomengine.security.jwt;
 
 import com.swirl.ecomengine.auth.exception.JwtValidationException;
 import com.swirl.ecomengine.user.User;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -13,31 +17,58 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final String secret;
+    private final long expirationMs;
 
-    @Value("${jwt.expiration}")
-    private long expirationMs;
+    // ------------------------------------------------------------
+    // Constructors
+    // ------------------------------------------------------------
 
-    private Key getSigningKey() {
+    @Autowired
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration}") long expirationMs
+    ) {
+        this.secret = secret;
+        this.expirationMs = expirationMs;
+    }
+
+    // ------------------------------------------------------------
+    // Key handling
+    // ------------------------------------------------------------
+
+    private Key signingKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
+
+    // ------------------------------------------------------------
+    // Token generation
+    // ------------------------------------------------------------
 
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setExpiration(expirationDate())
+                .signWith(signingKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public String extractRole(String token) {
+    private Date expirationDate() {
+        return new Date(System.currentTimeMillis() + expirationMs);
+    }
+
+    // ------------------------------------------------------------
+    // Token validation + claim extraction
+    // ------------------------------------------------------------
+
+    public boolean validateToken(String token) {
         try {
-            return extractClaims(token).get("role", String.class);
-        } catch (Exception e) {
-            throw new JwtValidationException("Invalid or missing role claim", e);
+            extractClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new JwtValidationException("JWT validation failed", e);
         }
     }
 
@@ -49,18 +80,21 @@ public class JwtService {
         }
     }
 
-    public boolean validateToken(String token) {
+    public String extractRole(String token) {
         try {
-            extractClaims(token);
-            return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new JwtValidationException("JWT validation failed", e);
+            return extractClaims(token).get("role", String.class);
+        } catch (Exception e) {
+            throw new JwtValidationException("Invalid or missing role claim", e);
         }
     }
 
+    // ------------------------------------------------------------
+    // Internal claim parsing
+    // ------------------------------------------------------------
+
     private Claims extractClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+                .setSigningKey(signingKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
