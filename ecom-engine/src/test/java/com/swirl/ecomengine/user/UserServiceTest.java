@@ -1,12 +1,14 @@
 package com.swirl.ecomengine.user;
 
 import com.swirl.ecomengine.user.exception.EmailAlreadyExistsException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 class UserServiceTest {
@@ -15,12 +17,21 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private UserService userService;
+
+    @BeforeEach
+    void setup() {
+        userRepository.deleteAll();
+        userService = new UserService(userRepository, encoder);
+    }
+
+    // ============================================================
+    // createUser
+    // ============================================================
 
     @Test
-    void createUser_successfullyCreatesUser() {
-        UserService service = new UserService(userRepository, encoder);
-
-        User user = service.createUser("test@example.com", "password123");
+    void createUser_shouldPersistUserWithEncodedPassword_andDefaultRole() {
+        User user = userService.createUser("test@example.com", "password123");
 
         assertThat(user.getId()).isNotNull();
         assertThat(user.getEmail()).isEqualTo("test@example.com");
@@ -29,19 +40,15 @@ class UserServiceTest {
     }
 
     @Test
-    void createUser_emailAlreadyExists_throwsException() {
-        User existing = User.builder()
+    void createUser_shouldThrowException_whenEmailAlreadyExists() {
+        userRepository.save(User.builder()
                 .email("test@example.com")
                 .password("hashed")
                 .role(Role.USER)
-                .build();
-
-        userRepository.save(existing);
-
-        UserService service = new UserService(userRepository, encoder);
+                .build());
 
         assertThatThrownBy(() ->
-                service.createUser("test@example.com", "password123")
+                userService.createUser("test@example.com", "password123")
         ).isInstanceOf(EmailAlreadyExistsException.class);
     }
 }

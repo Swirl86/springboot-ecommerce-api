@@ -1,179 +1,207 @@
 package com.swirl.ecomengine.product;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swirl.ecomengine.EcomEngineApplication;
+import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.CategoryRepository;
-import com.swirl.ecomengine.category.dto.CategoryRequest;
-import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.product.dto.ProductRequest;
-import com.swirl.ecomengine.product.dto.ProductResponse;
+import com.swirl.ecomengine.security.SecurityConfig;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.*;
+import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        classes = {
+                EcomEngineApplication.class,
+                SecurityConfig.class
+        }
+)
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ProductIntegrationTest {
 
-    @LocalServerPort
-    private int port;
+    @Autowired private MockMvc mvc;
+    @Autowired private ObjectMapper json;
 
-    @Autowired
-    private TestRestTemplate rest;
+    @Autowired private ProductRepository productRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private UserRepository userRepository;
+    @Autowired private JwtService jwtService;
+    @Autowired private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private JwtService jwtService;
-
-    private String baseUrl;
     private String adminToken;
+    private String userToken;
+    private Long categoryId;
 
     @BeforeEach
     void setup() {
-        baseUrl = "http://localhost:" + port;
-
         productRepository.deleteAll();
         categoryRepository.deleteAll();
         userRepository.deleteAll();
 
-        // Create ADMIN user
-        User admin = new User(
-                null,
-                "admin@example.com",
-                "password", // no encoding needed for tests
-                Role.ADMIN
-        );
+        // Create category
+        Category category = new Category(null, "Electronics");
+        categoryRepository.save(category);
+        categoryId = category.getId();
+
+        // Create ADMIN
+        User admin = new User(null, "admin@example.com", passwordEncoder.encode("password"), Role.ADMIN);
         userRepository.save(admin);
-
         adminToken = jwtService.generateToken(admin);
+
+        // Create USER
+        User user = new User(null, "user@example.com", passwordEncoder.encode("password"), Role.USER);
+        userRepository.save(user);
+        userToken = jwtService.generateToken(user);
     }
 
-    private HttpHeaders authHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(adminToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
-    }
+    // ============================================================
+    // POST /products
+    // ============================================================
 
-    private Long createCategory() {
-        var req = new CategoryRequest("Electronics");
+    @Test
+    void adminCanCreateProduct() throws Exception {
+        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
-        HttpEntity<CategoryRequest> entity = new HttpEntity<>(req, authHeaders());
-
-        ResponseEntity<CategoryResponse> res =
-                rest.postForEntity(baseUrl + "/categories", entity, CategoryResponse.class);
-
-        assertThat(res.getBody()).isNotNull();
-        return res.getBody().id();
+        mvc.perform(post("/products")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Laptop"));
     }
 
     @Test
-    void fullProductFlow() {
-        Long categoryId = createCategory();
+    void userForbiddenToCreateProduct() throws Exception {
+        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
-        ProductRequest request =
-                new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
-
-        HttpEntity<ProductRequest> entity = new HttpEntity<>(request, authHeaders());
-
-        ResponseEntity<ProductResponse> createResponse =
-                rest.postForEntity(baseUrl + "/products", entity, ProductResponse.class);
-
-        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-
-        ProductResponse created = createResponse.getBody();
-        assertThat(created).isNotNull();
-        Long id = created.id();
-
-        ResponseEntity<ProductResponse> getResponse =
-                rest.exchange(baseUrl + "/products/" + id, HttpMethod.GET,
-                        new HttpEntity<>(authHeaders()), ProductResponse.class);
-
-        Assertions.assertNotNull(getResponse.getBody());
-        assertThat(getResponse.getBody().name()).isEqualTo("Laptop");
-        assertThat(getResponse.getBody().categoryId()).isEqualTo(categoryId);
-
-        ResponseEntity<ProductResponse[]> listResponse =
-                rest.exchange(baseUrl + "/products", HttpMethod.GET,
-                        new HttpEntity<>(authHeaders()), ProductResponse[].class);
-
-        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(listResponse.getBody()).isNotEmpty();
+        mvc.perform(post("/products")
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
-    void updateProduct_updatesExistingProduct() {
-        Long categoryId = createCategory();
+    void unauthenticatedCannotCreateProduct() throws Exception {
+        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
-        ProductRequest createReq =
-                new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
+        mvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+    }
 
-        HttpEntity<ProductRequest> createEntity = new HttpEntity<>(createReq, authHeaders());
+    // ============================================================
+    // GET /products/{id}
+    // ============================================================
 
-        ProductResponse created =
-                rest.postForEntity(baseUrl + "/products", createEntity, ProductResponse.class)
-                        .getBody();
+    @Test
+    void getProduct_shouldReturn200_whenExists() throws Exception {
+        Product saved = productRepository.save(
+                new Product(null, "Laptop", 999.99, "Powerful laptop", getCategory())
+        );
 
-        Assertions.assertNotNull(created);
-        Long id = created.id();
-
-        ProductRequest updateReq =
-                new ProductRequest("Gaming Laptop", 1499.99, "Upgraded model", categoryId);
-
-        rest.exchange(baseUrl + "/products/" + id, HttpMethod.PUT,
-                new HttpEntity<>(updateReq, authHeaders()), Void.class);
-
-        ProductResponse updated =
-                rest.exchange(baseUrl + "/products/" + id, HttpMethod.GET,
-                                new HttpEntity<>(authHeaders()), ProductResponse.class)
-                        .getBody();
-
-        Assertions.assertNotNull(updated);
-        assertThat(updated.name()).isEqualTo("Gaming Laptop");
-        assertThat(updated.price()).isEqualTo(1499.99);
+        mvc.perform(get("/products/" + saved.getId())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Laptop"));
     }
 
     @Test
-    void deleteProduct_removesProduct() {
-        Long categoryId = createCategory();
+    void getProduct_shouldReturn404_whenNotFound() throws Exception {
+        mvc.perform(get("/products/999")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound());
+    }
 
-        ProductRequest req =
-                new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
+    // ============================================================
+    // PUT /products/{id}
+    // ============================================================
 
-        ProductResponse created =
-                rest.postForEntity(baseUrl + "/products",
-                                new HttpEntity<>(req, authHeaders()),
-                                ProductResponse.class)
-                        .getBody();
+    @Test
+    void adminCanUpdateProduct() throws Exception {
+        Product saved = productRepository.save(
+                new Product(null, "Old", 100, "Old desc", getCategory())
+        );
 
-        Assertions.assertNotNull(created);
-        Long id = created.id();
+        ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId);
 
-        rest.exchange(baseUrl + "/products/" + id, HttpMethod.DELETE,
-                new HttpEntity<>(authHeaders()), Void.class);
+        mvc.perform(put("/products/" + saved.getId())
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(update)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("New"));
+    }
 
-        ResponseEntity<String> response =
-                rest.exchange(baseUrl + "/products/" + id, HttpMethod.GET,
-                        new HttpEntity<>(authHeaders()), String.class);
+    @Test
+    void userForbiddenToUpdateProduct() throws Exception {
+        Product saved = productRepository.save(
+                new Product(null, "Old", 100, "Old desc", getCategory())
+        );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId);
+
+        mvc.perform(put("/products/" + saved.getId())
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(update)))
+                .andExpect(status().isForbidden());
+    }
+
+    // ============================================================
+    // DELETE /products/{id}
+    // ============================================================
+
+    @Test
+    void adminCanDeleteProduct() throws Exception {
+        Product saved = productRepository.save(
+                new Product(null, "Laptop", 999.99, "desc", getCategory())
+        );
+
+        mvc.perform(delete("/products/" + saved.getId())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void userForbiddenToDeleteProduct() throws Exception {
+        Product saved = productRepository.save(
+                new Product(null, "Laptop", 999.99, "desc", getCategory())
+        );
+
+        mvc.perform(delete("/products/" + saved.getId())
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedCannotDeleteProduct() throws Exception {
+        Product saved = productRepository.save(
+                new Product(null, "Laptop", 999.99, "desc", getCategory())
+        );
+
+        mvc.perform(delete("/products/" + saved.getId()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private Category getCategory() {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new IllegalStateException("Category missing in test setup"));
     }
 }

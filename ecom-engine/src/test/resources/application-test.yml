@@ -19,7 +19,6 @@ spring:
 
   # -----------------------------
   # Built-in Spring Security test user
-  # Only used if TestSecurityConfig does NOT override security
   # -----------------------------
   security:
     user:
