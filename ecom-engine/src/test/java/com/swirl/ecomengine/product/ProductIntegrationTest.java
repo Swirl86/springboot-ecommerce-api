@@ -5,7 +5,10 @@ import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
-import com.swirl.ecomengine.security.TestSecurityConfig;
+import com.swirl.ecomengine.security.jwt.JwtService;
+import com.swirl.ecomengine.user.Role;
+import com.swirl.ecomengine.user.User;
+import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,16 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Import(TestSecurityConfig.class)
 class ProductIntegrationTest {
 
     @LocalServerPort
@@ -37,7 +37,14 @@ class ProductIntegrationTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtService jwtService;
+
     private String baseUrl;
+    private String adminToken;
 
     @BeforeEach
     void setup() {
@@ -45,15 +52,36 @@ class ProductIntegrationTest {
 
         productRepository.deleteAll();
         categoryRepository.deleteAll();
+        userRepository.deleteAll();
+
+        // Create ADMIN user
+        User admin = new User(
+                null,
+                "admin@example.com",
+                "password", // no encoding needed for tests
+                Role.ADMIN
+        );
+        userRepository.save(admin);
+
+        adminToken = jwtService.generateToken(admin);
+    }
+
+    private HttpHeaders authHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 
     private Long createCategory() {
         var req = new CategoryRequest("Electronics");
 
-        var res = rest.withBasicAuth("admin", "admin")
-                .postForEntity(baseUrl + "/categories", req, CategoryResponse.class);
+        HttpEntity<CategoryRequest> entity = new HttpEntity<>(req, authHeaders());
 
-        Assertions.assertNotNull(res.getBody());
+        ResponseEntity<CategoryResponse> res =
+                rest.postForEntity(baseUrl + "/categories", entity, CategoryResponse.class);
+
+        assertThat(res.getBody()).isNotNull();
         return res.getBody().id();
     }
 
@@ -64,9 +92,10 @@ class ProductIntegrationTest {
         ProductRequest request =
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
+        HttpEntity<ProductRequest> entity = new HttpEntity<>(request, authHeaders());
+
         ResponseEntity<ProductResponse> createResponse =
-                rest.withBasicAuth("admin", "admin")
-                        .postForEntity(baseUrl + "/products", request, ProductResponse.class);
+                rest.postForEntity(baseUrl + "/products", entity, ProductResponse.class);
 
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
@@ -74,16 +103,17 @@ class ProductIntegrationTest {
         assertThat(created).isNotNull();
         Long id = created.id();
 
-        ProductResponse getResponse =
-                rest.withBasicAuth("admin", "admin")
-                        .getForObject(baseUrl + "/products/" + id, ProductResponse.class);
+        ResponseEntity<ProductResponse> getResponse =
+                rest.exchange(baseUrl + "/products/" + id, HttpMethod.GET,
+                        new HttpEntity<>(authHeaders()), ProductResponse.class);
 
-        assertThat(getResponse.name()).isEqualTo("Laptop");
-        assertThat(getResponse.categoryId()).isEqualTo(categoryId);
+        Assertions.assertNotNull(getResponse.getBody());
+        assertThat(getResponse.getBody().name()).isEqualTo("Laptop");
+        assertThat(getResponse.getBody().categoryId()).isEqualTo(categoryId);
 
         ResponseEntity<ProductResponse[]> listResponse =
-                rest.withBasicAuth("admin", "admin")
-                        .getForEntity(baseUrl + "/products", ProductResponse[].class);
+                rest.exchange(baseUrl + "/products", HttpMethod.GET,
+                        new HttpEntity<>(authHeaders()), ProductResponse[].class);
 
         assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(listResponse.getBody()).isNotEmpty();
@@ -96,9 +126,10 @@ class ProductIntegrationTest {
         ProductRequest createReq =
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
+        HttpEntity<ProductRequest> createEntity = new HttpEntity<>(createReq, authHeaders());
+
         ProductResponse created =
-                rest.withBasicAuth("admin", "admin")
-                        .postForEntity(baseUrl + "/products", createReq, ProductResponse.class)
+                rest.postForEntity(baseUrl + "/products", createEntity, ProductResponse.class)
                         .getBody();
 
         Assertions.assertNotNull(created);
@@ -107,13 +138,15 @@ class ProductIntegrationTest {
         ProductRequest updateReq =
                 new ProductRequest("Gaming Laptop", 1499.99, "Upgraded model", categoryId);
 
-        rest.withBasicAuth("admin", "admin")
-                .put(baseUrl + "/products/" + id, updateReq);
+        rest.exchange(baseUrl + "/products/" + id, HttpMethod.PUT,
+                new HttpEntity<>(updateReq, authHeaders()), Void.class);
 
         ProductResponse updated =
-                rest.withBasicAuth("admin", "admin")
-                        .getForObject(baseUrl + "/products/" + id, ProductResponse.class);
+                rest.exchange(baseUrl + "/products/" + id, HttpMethod.GET,
+                                new HttpEntity<>(authHeaders()), ProductResponse.class)
+                        .getBody();
 
+        Assertions.assertNotNull(updated);
         assertThat(updated.name()).isEqualTo("Gaming Laptop");
         assertThat(updated.price()).isEqualTo(1499.99);
     }
@@ -126,19 +159,20 @@ class ProductIntegrationTest {
                 new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
 
         ProductResponse created =
-                rest.withBasicAuth("admin", "admin")
-                        .postForEntity(baseUrl + "/products", req, ProductResponse.class)
+                rest.postForEntity(baseUrl + "/products",
+                                new HttpEntity<>(req, authHeaders()),
+                                ProductResponse.class)
                         .getBody();
 
         Assertions.assertNotNull(created);
         Long id = created.id();
 
-        rest.withBasicAuth("admin", "admin")
-                .delete(baseUrl + "/products/" + id);
+        rest.exchange(baseUrl + "/products/" + id, HttpMethod.DELETE,
+                new HttpEntity<>(authHeaders()), Void.class);
 
         ResponseEntity<String> response =
-                rest.withBasicAuth("admin", "admin")
-                        .getForEntity(baseUrl + "/products/" + id, String.class);
+                rest.exchange(baseUrl + "/products/" + id, HttpMethod.GET,
+                        new HttpEntity<>(authHeaders()), String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
