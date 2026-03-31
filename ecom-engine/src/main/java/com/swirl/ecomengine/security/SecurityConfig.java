@@ -1,10 +1,12 @@
 package com.swirl.ecomengine.security;
 
+import com.swirl.ecomengine.security.handler.JsonAccessDeniedHandler;
+import com.swirl.ecomengine.security.handler.JsonAuthenticationEntryPoint;
 import com.swirl.ecomengine.security.jwt.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,8 +19,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Profile({"dev", "prod", "test-integration"})
 public class SecurityConfig {
 
+    private final JsonAuthenticationEntryPoint authenticationEntryPoint;
+    private final JsonAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthRateLimiter authRateLimiter;
     private final CorsConfig corsConfig;
@@ -38,10 +43,8 @@ public class SecurityConfig {
 
                 // Global exception handling
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((req, res, ex2) ->
-                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-                        .accessDeniedHandler((req, res, ex2) ->
-                                res.sendError(HttpServletResponse.SC_FORBIDDEN))
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 )
 
                 // Authorization rules

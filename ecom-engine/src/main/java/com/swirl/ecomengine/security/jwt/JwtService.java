@@ -9,12 +9,14 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
 
 @Service
+@Profile({"dev", "prod", "test-integration"})
 public class JwtService {
 
     private final String secret;
