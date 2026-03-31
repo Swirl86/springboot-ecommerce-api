@@ -6,11 +6,23 @@ import com.swirl.ecomengine.security.jwt.JwtAuthenticationFilter;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.UserRepository;
 import org.mockito.Mockito;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
-public class SecurityTestConfig {
+/**
+ * Security configuration for tests where the JWT filter should be active.
+ * <pre>
+ * Used in:
+ *  - @WebMvcTest(addFilters = true) when testing controllers with JWT validation
+ *  - @SpringBootTest integration tests that require the real SecurityConfig
+ * <pre>
+ * Provides:
+ *  - Test JwtService with static secret
+ *  - JwtAuthenticationFilter wired with test JwtService + mocked UserRepository
+ *  - AuthRateLimiter and CorsConfig to satisfy SecurityConfig dependencies
+ */
+@TestConfiguration
+public class SecurityTestConfigJwt {
 
     /**
      * A lightweight JwtService used only for test environments.
@@ -21,7 +33,7 @@ public class SecurityTestConfig {
     public JwtService testJwtService() {
         return new JwtService(
                 "test-secret-test-secret-test-secret-123456",
-                3600000 // 1 hour
+                3600000
         );
     }
 

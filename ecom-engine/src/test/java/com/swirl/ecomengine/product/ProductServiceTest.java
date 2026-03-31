@@ -8,6 +8,7 @@ import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import testsupport.TestDataFactory;
 
 import java.util.Optional;
 
@@ -36,7 +37,9 @@ class ProductServiceTest {
     @Test
     void getProductById_returnsProductResponse() {
         Category category = new Category(10L, "Electronics");
-        Product product = new Product(1L, "Laptop", 999.99, "Powerful laptop", category);
+
+        Product product = TestDataFactory.product("Laptop", 999.99, "Powerful laptop", category);
+        product.setId(1L);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
@@ -69,7 +72,9 @@ class ProductServiceTest {
 
         when(categoryService.getById(10L)).thenReturn(category);
 
-        Product saved = new Product(1L, "Laptop", 999.99, "Powerful laptop", category);
+        Product saved = TestDataFactory.product("Laptop", 999.99, "Powerful laptop", category);
+        saved.setId(1L);
+
         when(productRepository.save(any(Product.class))).thenReturn(saved);
 
         ProductResponse response = productService.createProduct(request);

@@ -1,13 +1,10 @@
 package com.swirl.ecomengine.product;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swirl.ecomengine.EcomEngineApplication;
 import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.CategoryRepository;
 import com.swirl.ecomengine.product.dto.ProductRequest;
-import com.swirl.ecomengine.security.SecurityConfig;
 import com.swirl.ecomengine.security.jwt.JwtService;
-import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,23 +12,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import testsupport.IntegrationTestConfig;
+import testsupport.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        classes = {
-                EcomEngineApplication.class,
-                SecurityConfig.class
-        }
-)
+@SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@Import(IntegrationTestConfig.class)
+@ActiveProfiles("test-integration")
 class ProductIntegrationTest {
 
     @Autowired private MockMvc mvc;
@@ -54,18 +50,15 @@ class ProductIntegrationTest {
         userRepository.deleteAll();
 
         // Create category
-        Category category = new Category(null, "Electronics");
-        categoryRepository.save(category);
+        Category category = categoryRepository.save(TestDataFactory.defaultCategory());
         categoryId = category.getId();
 
         // Create ADMIN
-        User admin = new User(null, "admin@example.com", passwordEncoder.encode("password"), Role.ADMIN);
-        userRepository.save(admin);
+        User admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
         adminToken = jwtService.generateToken(admin);
 
         // Create USER
-        User user = new User(null, "user@example.com", passwordEncoder.encode("password"), Role.USER);
-        userRepository.save(user);
+        User user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
     }
 
@@ -113,7 +106,7 @@ class ProductIntegrationTest {
     @Test
     void getProduct_shouldReturn200_whenExists() throws Exception {
         Product saved = productRepository.save(
-                new Product(null, "Laptop", 999.99, "Powerful laptop", getCategory())
+                TestDataFactory.defaultProduct(getCategory())
         );
 
         mvc.perform(get("/products/" + saved.getId())
@@ -136,7 +129,7 @@ class ProductIntegrationTest {
     @Test
     void adminCanUpdateProduct() throws Exception {
         Product saved = productRepository.save(
-                new Product(null, "Old", 100, "Old desc", getCategory())
+                TestDataFactory.product("Old", 100, "Old desc", getCategory())
         );
 
         ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId);
@@ -152,7 +145,7 @@ class ProductIntegrationTest {
     @Test
     void userForbiddenToUpdateProduct() throws Exception {
         Product saved = productRepository.save(
-                new Product(null, "Old", 100, "Old desc", getCategory())
+                TestDataFactory.product("Old", 100, "Old desc", getCategory())
         );
 
         ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId);
@@ -171,7 +164,7 @@ class ProductIntegrationTest {
     @Test
     void adminCanDeleteProduct() throws Exception {
         Product saved = productRepository.save(
-                new Product(null, "Laptop", 999.99, "desc", getCategory())
+                TestDataFactory.defaultProduct(getCategory())
         );
 
         mvc.perform(delete("/products/" + saved.getId())
@@ -182,7 +175,7 @@ class ProductIntegrationTest {
     @Test
     void userForbiddenToDeleteProduct() throws Exception {
         Product saved = productRepository.save(
-                new Product(null, "Laptop", 999.99, "desc", getCategory())
+                TestDataFactory.defaultProduct(getCategory())
         );
 
         mvc.perform(delete("/products/" + saved.getId())
@@ -193,7 +186,7 @@ class ProductIntegrationTest {
     @Test
     void unauthenticatedCannotDeleteProduct() throws Exception {
         Product saved = productRepository.save(
-                new Product(null, "Laptop", 999.99, "desc", getCategory())
+                TestDataFactory.defaultProduct(getCategory())
         );
 
         mvc.perform(delete("/products/" + saved.getId()))

@@ -1,23 +1,26 @@
 package com.swirl.ecomengine.category;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swirl.ecomengine.EcomEngineApplication;
 import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.product.ProductRepository;
-import com.swirl.ecomengine.security.SecurityConfig;
 import com.swirl.ecomengine.security.jwt.JwtService;
-import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import testsupport.IntegrationTestConfig;
+import testsupport.TestDataFactory;
+
+import java.util.Optional;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -25,22 +28,24 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        classes = {
-                EcomEngineApplication.class,
-                SecurityConfig.class
-        }
-)
+@SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-class CategoryIntegrationTest {
+@Import(IntegrationTestConfig.class)
+@ActiveProfiles("test-integration")
+class CategoryIntegrationTest  {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
 
     @Autowired private ProductRepository productRepository;
     @Autowired private CategoryRepository categoryRepository;
+
     @Autowired private UserRepository userRepository;
+
+    @Autowired
+    @Qualifier("jwtUserRepository")
+    private UserRepository mockUserRepository;
+
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
 
@@ -54,14 +59,16 @@ class CategoryIntegrationTest {
         userRepository.deleteAll();
 
         // Create ADMIN
-        User admin = new User(null, "admin@example.com", passwordEncoder.encode("password"), Role.ADMIN);
-        userRepository.save(admin);
+        User admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
         adminToken = jwtService.generateToken(admin);
 
         // Create USER
-        User user = new User(null, "user@example.com", passwordEncoder.encode("password"), Role.USER);
-        userRepository.save(user);
+        User user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
+
+        // Mocka JWT-filter lookup
+        when(mockUserRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(admin));
+        when(mockUserRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
     }
 
     // ============================================================
@@ -118,7 +125,7 @@ class CategoryIntegrationTest {
 
     @Test
     void userCanGetCategories() throws Exception {
-        categoryRepository.save(new Category(null, "Electronics"));
+        categoryRepository.save(TestDataFactory.category("Electronics"));
 
         mvc.perform(get("/categories")
                         .header("Authorization", "Bearer " + userToken))
@@ -140,7 +147,7 @@ class CategoryIntegrationTest {
 
     @Test
     void userCanGetCategoryById() throws Exception {
-        Category saved = categoryRepository.save(new Category(null, "Electronics"));
+        Category saved = categoryRepository.save(TestDataFactory.category("Electronics"));
 
         mvc.perform(get("/categories/" + saved.getId())
                         .header("Authorization", "Bearer " + userToken))

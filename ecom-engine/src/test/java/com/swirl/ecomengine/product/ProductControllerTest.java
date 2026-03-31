@@ -7,14 +7,14 @@ import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import testsupport.SecurityTestConfig;
+import testsupport.SecurityTestConfigMinimal;
+
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -26,9 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@Import(SecurityTestConfig.class)
-@ActiveProfiles("test")
+@Import(SecurityTestConfigMinimal.class)
+@ActiveProfiles("test-controller")
 class ProductControllerTest {
 
     @Autowired private MockMvc mvc;
@@ -45,6 +44,7 @@ class ProductControllerTest {
         ProductResponse response = new ProductResponse(
                 1L, "Laptop", 999.99, "Powerful laptop", 10L, "Electronics"
         );
+
         when(productService.getProductById(1L)).thenReturn(response);
 
         mvc.perform(get("/products/1"))
