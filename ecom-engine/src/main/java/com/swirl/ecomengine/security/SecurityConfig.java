@@ -20,12 +20,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthRateLimiter authRateLimiter;
+    private final CorsConfig corsConfig;
 
     @Bean
     @Order(1)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         return http
+                .cors(cors -> cors.configurationSource(corsConfig.corsConfigurationSource()))
+
+                // Disable CSRF for stateless JWT
                 .csrf(AbstractHttpConfigurer::disable)
 
                 // Stateless JWT
@@ -41,27 +46,15 @@ public class SecurityConfig {
 
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/auth/**").permitAll()
-
-                        // Read access for authenticated users
-                        .requestMatchers(HttpMethod.GET, "/products/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/categories/**").authenticated()
-
-                        // Write access for admins
-                        .requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
-
-                        .requestMatchers(HttpMethod.POST, "/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
-
-                        // Everything else
-                        .anyRequest().authenticated()
+                        .requestMatchers(SecurityRules.PUBLIC).permitAll()
+                        .requestMatchers(HttpMethod.GET, SecurityRules.USER_READ).authenticated()
+                        .requestMatchers(HttpMethod.POST, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                 )
 
-                // JWT filter
+                // Filters
+                .addFilterBefore(authRateLimiter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .build();
