@@ -1,14 +1,14 @@
 package com.swirl.ecomengine.user;
 
-import com.swirl.ecomengine.user.exception.EmailAlreadyExistsException;
+import com.swirl.ecomengine.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
 class UserServiceTest {
@@ -16,39 +16,71 @@ class UserServiceTest {
     @Autowired
     private UserRepository userRepository;
 
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private UserService userService;
 
     @BeforeEach
     void setup() {
         userRepository.deleteAll();
-        userService = new UserService(userRepository, encoder);
+        userService = new UserService(userRepository);
     }
 
     // ============================================================
-    // createUser
+    // getById
     // ============================================================
 
     @Test
-    void createUser_shouldPersistUserWithEncodedPassword_andDefaultRole() {
-        User user = userService.createUser("test@example.com", "password123");
+    void getById_shouldReturnUser_whenUserExists() {
+        User saved = userRepository.save(
+                User.builder()
+                        .email("test@example.com")
+                        .password("hashed")
+                        .role(Role.USER)
+                        .build()
+        );
 
-        assertThat(user.getId()).isNotNull();
-        assertThat(user.getEmail()).isEqualTo("test@example.com");
-        assertThat(encoder.matches("password123", user.getPassword())).isTrue();
-        assertThat(user.getRole()).isEqualTo(Role.USER);
+        User result = userService.getById(saved.getId());
+
+        assertThat(result.getEmail()).isEqualTo("test@example.com");
     }
 
     @Test
-    void createUser_shouldThrowException_whenEmailAlreadyExists() {
-        userRepository.save(User.builder()
-                .email("test@example.com")
-                .password("hashed")
-                .role(Role.USER)
-                .build());
+    void getById_shouldThrowException_whenUserDoesNotExist() {
+        assertThatThrownBy(() -> userService.getById(999L))
+                .isInstanceOf(UserNotFoundException.class);
+    }
 
-        assertThatThrownBy(() ->
-                userService.createUser("test@example.com", "password123")
-        ).isInstanceOf(EmailAlreadyExistsException.class);
+    // ============================================================
+    // getAll
+    // ============================================================
+
+    @Test
+    void getAll_shouldReturnAllUsers() {
+        userRepository.save(User.builder().email("a@example.com").password("x").role(Role.USER).build());
+        userRepository.save(User.builder().email("b@example.com").password("y").role(Role.USER).build());
+
+        List<User> users = userService.getAll();
+
+        assertThat(users).hasSize(2);
+    }
+
+    // ============================================================
+    // update
+    // ============================================================
+
+    @Test
+    void update_shouldPersistUpdatedUser() {
+        User saved = userRepository.save(
+                User.builder()
+                        .email("old@example.com")
+                        .password("hashed")
+                        .role(Role.USER)
+                        .build()
+        );
+
+        saved.setEmail("new@example.com");
+
+        User updated = userService.update(saved);
+
+        assertThat(updated.getEmail()).isEqualTo("new@example.com");
     }
 }

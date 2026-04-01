@@ -11,14 +11,18 @@ import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Test configuration used for full integration tests.
+ * Test configuration used for full @SpringBootTest integration tests.
  * <pre>
  * This configuration provides:
  *  - A test-friendly JwtService (static secret, no external config needed)
  *  - A JwtAuthenticationFilter wired with test JwtService + mocked UserRepository
  *  - AuthRateLimiter + CorsConfig to satisfy SecurityConfig dependencies
+ *  - Provide a minimal SecurityFilterChain (CSRF disabled, /auth/** open)
  *  - A fully configured ObjectMapper with JavaTimeModule so LocalDateTime
  *    can be serialized in ErrorResponse and security handlers
  * <pre>
@@ -56,6 +60,18 @@ public class IntegrationTestConfig {
     @Bean
     public JwtAuthenticationFilter testJwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(testJwtService(), mockUserRepository());
+    }
+
+    /** Minimal security chain for integration tests (CSRF off, /auth/** open). */
+    @Bean
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/**").permitAll()
+                        .anyRequest().authenticated()
+                );
+        return http.build();
     }
 
     /**
