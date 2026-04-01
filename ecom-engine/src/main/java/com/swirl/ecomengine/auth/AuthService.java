@@ -1,9 +1,11 @@
 package com.swirl.ecomengine.auth;
 
+import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
-import com.swirl.ecomengine.auth.dto.LoginResponse;
+import com.swirl.ecomengine.auth.dto.RegisterRequest;
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
 import com.swirl.ecomengine.security.jwt.JwtService;
+import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +26,30 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public LoginResponse login(LoginRequest request) {
+    public AuthResponse register(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("Email already in use");
+        }
+
+        User user = User.builder()
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .role(Role.USER)
+                .build();
+
+        userRepository.save(user);
+
+        String token = jwtService.generateToken(user);
+
+        return new AuthResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name(),
+                token
+        );
+    }
+
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(InvalidCredentialsException::new);
 
@@ -34,11 +59,11 @@ public class AuthService {
 
         String token = jwtService.generateToken(user);
 
-        return new LoginResponse(
-                token,
+        return new AuthResponse(
                 user.getId(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                token
         );
     }
 }
