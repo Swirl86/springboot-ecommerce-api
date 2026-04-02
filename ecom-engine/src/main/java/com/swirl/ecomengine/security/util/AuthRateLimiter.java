@@ -12,6 +12,19 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Simple in-memory rate limiter used for demonstration and portfolio purposes.
+ * <pre>
+ * This implementation tracks request counts per client IP using a ConcurrentHashMap.
+ * It is intentionally minimal and not intended for production use.
+ * <pre>
+ * Limitations:
+ * - In-memory only (no distributed support)
+ * - IP-based (not user/token aware)
+ * - No sliding window or advanced throttling strategies
+ * <pre>
+ * Suitable for showcasing rate limiting concepts in a Spring Boot application.
+ */
 @Component
 public class AuthRateLimiter extends OncePerRequestFilter {
 
