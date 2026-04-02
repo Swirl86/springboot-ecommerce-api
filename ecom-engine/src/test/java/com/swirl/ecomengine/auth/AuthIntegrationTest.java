@@ -46,7 +46,7 @@ class AuthIntegrationTest {
     @Test
     void register_shouldCreateUserInDatabase_andReturnJwt() throws Exception {
         // ---------- Arrange ----------
-        RegisterRequest request = new RegisterRequest("test@example.com", "pass123");
+        RegisterRequest request = new RegisterRequest("test@example.com", "password123");
 
         // ---------- Act & Assert ----------
         mockMvc.perform(post("/auth/register")
@@ -66,14 +66,14 @@ class AuthIntegrationTest {
 
     @Test
     void login_shouldReturnJwt_whenCredentialsAreValid() throws Exception {
-        RegisterRequest register = new RegisterRequest("login@example.com", "pass123");
+        RegisterRequest register = new RegisterRequest("login@example.com", "password123");
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(register)))
                 .andExpect(status().isOk());
 
-        LoginRequest login = new LoginRequest("login@example.com", "pass123");
+        LoginRequest login = new LoginRequest("login@example.com", "password123");
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -90,7 +90,7 @@ class AuthIntegrationTest {
     @Test
     void login_shouldReturnUnauthorized_whenPasswordIsWrong() throws Exception {
         // ---------- Arrange ----------
-        RegisterRequest register = new RegisterRequest("wrongpass@example.com", "pass123");
+        RegisterRequest register = new RegisterRequest("wrongpass@example.com", "password123");
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

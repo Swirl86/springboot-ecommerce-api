@@ -71,7 +71,7 @@ class SecurityIntegrationTest {
 
     @Test
     void login_shouldBePublic_andReturn200() throws Exception {
-        LoginRequest request = new LoginRequest("admin@example.com", "password");
+        LoginRequest request = new LoginRequest("admin@example.com", "password123");
 
         mvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,7 +81,7 @@ class SecurityIntegrationTest {
 
     @Test
     void login_shouldReturn401_whenInvalidCredentials() throws Exception {
-        LoginRequest request = new LoginRequest("admin@example.com", "wrong");
+        LoginRequest request = new LoginRequest("admin@example.com", "incorrect");
 
         mvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

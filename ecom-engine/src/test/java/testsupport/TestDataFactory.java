@@ -23,14 +23,14 @@ public class TestDataFactory {
      * Creates a default RegisterRequest for auth tests.
      */
     public static RegisterRequest registerRequest() {
-        return new RegisterRequest("test@example.com", "pass123");
+        return new RegisterRequest("test@example.com", "password123");
     }
 
     /**
      * Creates a default LoginRequest for auth tests.
      */
     public static LoginRequest loginRequest() {
-        return new LoginRequest("test@example.com", "pass123");
+        return new LoginRequest("test@example.com", "password123");
     }
 
     /**
@@ -53,7 +53,7 @@ public class TestDataFactory {
         return new User(
                 null,
                 "admin@example.com",
-                encoder.encode("password"),
+                encoder.encode("password123"),
                 Role.ADMIN
         );
     }
@@ -62,7 +62,7 @@ public class TestDataFactory {
         return new User(
                 null,
                 "user@example.com",
-                encoder.encode("password"),
+                encoder.encode("password123"),
                 Role.USER
         );
     }

@@ -13,12 +13,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Cart", description = "Operations related to the user's shopping cart")
 @RestController
 @RequestMapping("/cart")
+@Validated
 public class CartController {
 
     private final CartService cartService;
@@ -64,12 +67,13 @@ public class CartController {
     @Operation(summary = "Update cart item quantity", description = "Updates the quantity of an existing cart item.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Item updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "404", description = "Item not found")
     })
     @PutMapping("/items/{itemId}")
     public ResponseEntity<CartResponse> updateItem(
             @AuthenticatedUser User user,
-            @PathVariable Long itemId,
+            @PathVariable @Positive(message = "Item ID must be positive") Long itemId,
             @Valid @RequestBody CartItemUpdateRequest request
     ) {
         Cart cart = cartService.updateItem(user, itemId, request.quantity());
@@ -87,7 +91,7 @@ public class CartController {
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<CartResponse> removeItem(
             @AuthenticatedUser User user,
-            @PathVariable Long itemId
+            @PathVariable @Positive(message = "Item ID must be positive") Long itemId
     ) {
         Cart cart = cartService.removeItem(user, itemId);
         return ResponseEntity.ok(mapper.toResponse(cart));
