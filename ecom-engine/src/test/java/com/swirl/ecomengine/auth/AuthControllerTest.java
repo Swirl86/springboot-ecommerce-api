@@ -5,6 +5,7 @@ import com.swirl.ecomengine.auth.controller.AuthController;
 import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
+import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -18,21 +19,19 @@ import testsupport.TestDataFactory;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
 @Import(SecurityTestConfigMinimal.class)
 @ActiveProfiles("test-controller")
 class AuthControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private AuthService authService;
+    @MockBean private AuthService authService;
+    @MockBean private AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
 
     // ============================================================
     // register

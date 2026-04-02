@@ -5,6 +5,7 @@ import com.swirl.ecomengine.category.controller.CategoryController;
 import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
+import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -33,6 +34,7 @@ class CategoryControllerTest {
     @Autowired private ObjectMapper json;
 
     @MockBean private CategoryService categoryService;
+    @MockBean private AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
 
     // ============================================================
     // GET /categories
