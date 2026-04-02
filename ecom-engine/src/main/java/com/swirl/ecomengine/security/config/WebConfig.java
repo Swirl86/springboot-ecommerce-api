@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.security;
+package com.swirl.ecomengine.security.config;
 
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import org.springframework.context.annotation.Configuration;

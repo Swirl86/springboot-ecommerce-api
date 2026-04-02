@@ -2,8 +2,8 @@ package testsupport;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.swirl.ecomengine.security.AuthRateLimiter;
-import com.swirl.ecomengine.security.CorsConfig;
+import com.swirl.ecomengine.security.util.AuthRateLimiter;
+import com.swirl.ecomengine.security.config.CorsConfig;
 import com.swirl.ecomengine.security.jwt.JwtAuthenticationFilter;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.UserRepository;

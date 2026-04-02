@@ -1,6 +1,6 @@
 package com.swirl.ecomengine.security.jwt;
 
-import com.swirl.ecomengine.security.userdetails.CustomUserDetails;
+import com.swirl.ecomengine.security.user.userdetails.CustomUserDetails;
 import com.swirl.ecomengine.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

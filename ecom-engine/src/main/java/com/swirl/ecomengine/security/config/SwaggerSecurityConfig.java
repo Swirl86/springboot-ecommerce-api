@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.security;
+package com.swirl.ecomengine.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,7 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
-import static com.swirl.ecomengine.security.SecurityRules.SWAGGER;
+import static com.swirl.ecomengine.security.util.SecurityRules.SWAGGER;
 
 /**
  * Security configuration that applies only in the 'dev' profile.

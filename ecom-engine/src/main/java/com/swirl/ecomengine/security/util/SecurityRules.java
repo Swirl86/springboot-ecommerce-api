@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.security;
+package com.swirl.ecomengine.security.util;
 
 public final class SecurityRules {
 

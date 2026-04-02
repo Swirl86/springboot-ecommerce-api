@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.security;
+package com.swirl.ecomengine.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

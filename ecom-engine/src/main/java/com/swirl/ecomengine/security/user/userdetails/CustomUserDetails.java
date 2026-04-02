@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.security.userdetails;
+package com.swirl.ecomengine.security.user.userdetails;
 
 import com.swirl.ecomengine.user.User;
 import org.springframework.security.core.GrantedAuthority;
