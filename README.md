@@ -28,10 +28,10 @@ This project starts simple and will grow gradually, with many small and clear co
 | API                    | Spring Web (Spring MVC), Springdoc OpenAPI     |
 | Architecture           | Layered design (Controller → Service → Repo)   |
 | Data                   | H2 (dev), PostgreSQL (planned), Spring Data JPA |
-| Auth (planned)         | Spring Security, JWT                           |
+| Auth                   | Spring Security 6, JWT (custom implementation) |
 | Build & Dependency     | Maven                                          |
 | Utilities              | Lombok, Spring Boot DevTools                   |
-| Testing                | JUnit 5, Mockito, Spring Boot Test             |
+| Testing                | JUnit 5, Mockito, Spring Boot Test (MockMvc)   |
 | Tooling                | IntelliJ IDEA                                  |
 
 ---
@@ -65,6 +65,32 @@ This project starts simple and will grow gradually, with many small and clear co
 </details>
 
 <details>
+  <summary><strong>Authentication & Security</strong></summary>
+
+- User entity & Role model
+- Registration & login endpoints
+- JWT generation & validation (custom implementation)
+- JwtAuthenticationFilter
+- Role-based authorization (RBAC)
+- Custom AccessDeniedHandler & AuthenticationEntryPoint
+- waggerSecurityConfig (Swagger allowed only in dev)
+- SecurityRules for centralized endpoint management
+- AuthController + AuthService
+- Controller tests + service tests
+
+</details>
+
+<details>
+<summary><strong>Cart Domain</strong></summary>
+
+- Cart & CartItem entities
+- CartService with add/remove/update logic
+- CartController (REST API)
+- Integration with Product domain
+- Controller tests + integration tests
+</details>
+
+<details>
   <summary><strong>API Documentation</strong></summary>
 
 - Added **OpenApiConfig** with API metadata
@@ -93,19 +119,8 @@ http://localhost:8080/swagger-ui.html
 </details>
 
 <details>
-  <summary><strong>User & Authentication</strong></summary>
-
-- User model
-- Registration & login
-- JWT authentication
-- Role-based authorization
-
-</details>
-
-<details>
   <summary><strong>Shopping Flow</strong></summary>
 
-- Cart
 - Orders
 - Checkout flow
 
@@ -120,8 +135,7 @@ http://localhost:8080/swagger-ui.html
 
 <details>
   <summary><strong>Testing Improvements</strong></summary>
-
-- More integration tests
+  
 - Test factories/builders
 - Manual API testing with Postman
 
@@ -140,28 +154,23 @@ http://localhost:8080/swagger-ui.html
 
 ## 📘 API Documentation (Swagger / OpenAPI)
 
-This project uses **Springdoc OpenAPI** to automatically generate API documentation.
+This project uses **Springdoc OpenAPI** to automatically generate API documentation. This makes the API easy to explore, test, and understand.
 
 - Interactive UI  
   👉 http://localhost:8080/swagger-ui.html
-
-- Configured in  
-  `OpenApiConfig.java`
 
 - Controllers are documented using:
   - `@Tag` for grouping
   - `@Operation` for summaries/descriptions
   - `@ApiResponses` for status codes
-
-This makes the API easy to explore, test, and understand.
+   
+- Swagger access is restricted to the development profile through SwaggerSecurityConfig.
 
 ---
 
 ## 🔧 Managing Spring Profiles
 
-The application determines its active profile through the `SPRING_PROFILES_ACTIVE` environment variable. This avoids hard‑coding a profile in `application.yml` and allows each environment to load the correct configuration.
-
-This ensures that each environment loads the correct configuration:
+The application determines its active profile through the `SPRING_PROFILES_ACTIVE` environment variable. This avoids hard‑coding a profile in `application.yml` nd ensures that each environment loads the correct configuration:
 
 - **Development** → `application-dev.yml`  
 - **Testing** → `@ActiveProfiles("test")` + `application-test.properties`  
@@ -183,31 +192,82 @@ This activates the `dev` profile whenever the application is started from the ID
 
 ## 🧪 Testing
 
-- Unit tests for services and controllers  
-- Integration tests for full request → database flow  
-- Category and Product domains fully covered  
-- Uses:
-  - `@WebMvcTest`
-  - `@SpringBootTest`
-  - `TestRestTemplate`
-  - Mockito
+The project includes a comprehensive test suite covering services, controllers, and full integration flows.
+
+<details>
+  <summary><strong>What’s covered</strong></summary>
+
+- **Unit tests** for service layer  
+  - Mockito‑based tests for business logic  
+  - Repository interactions mocked  
+- **Controller tests** using `@WebMvcTest`  
+  - Validates request/response handling  
+  - Security rules tested with mock users  
+- **Integration tests** using `@SpringBootTest` + MockMvc  
+  - Full request → service → database flow  
+  - JWT authentication tested end‑to‑end  
+  - Product, Category, Cart, and Auth flows covered  
+
+</details>
+
+<details>
+  <summary><strong>Technologies used</strong></summary>
+
+- `@SpringBootTest` (full context integration tests)  
+- `@WebMvcTest` (controller‑only tests)  
+- `MockMvc` (HTTP request simulation)  
+- `Mockito` (mocking dependencies)  
+- `@ActiveProfiles("test")` (isolated test configuration)  
+- H2 in‑memory database  
+
+</details>
+
+<details>
+  <summary><strong>Test Support Utilities</strong></summary>
+
+The project includes a dedicated `testsupport` package containing reusable helpers for cleaner and more maintainable tests:
+
+- **Test data builders** for creating consistent DTOs and entities  
+- **Mock utilities** for simplifying service and controller tests  
+- **Shared constants** used across multiple test classes  
+
+This keeps the test suite expressive, reduces duplication, and makes it easier to add new tests as the project grows.
+
+</details>
 
 ### 📋 Useful commands to run tests from terminal
 
-| Command                         | Description                                      |
-|---------------------------------|--------------------------------------------------|
-| `mvn test`                      | Runs all unit and integration tests              |
-| `mvn verify`                    | Full build pipeline (compile + test + verify)    |
-| `cd ecom-engine && mvn test`    | Runs tests inside the ecom-engine module         |
+| Command      | Description                                      |
+|--------------|--------------------------------------------------|
+| `mvn test`   | Runs all unit and integration tests              |
+| `mvn verify` | Full build pipeline (compile + test + verify)    |
 
 ---
-
 ## 🧱 Architecture Overview
 
-Controller → Service → Repository → Database
-DTOs ↔ Entities
+The project follows a clean, layered architecture designed for clarity, testability, and long‑term maintainability.
 
-GlobalExceptionHandler for consistent error responses
+<details>
+  <summary><strong>📐 Layered Structure</strong></summary>
 
-The project follows a clean, layered structure to keep logic separated and maintainable.
+- **Controller** → Handles HTTP requests and responses  
+- **Service** → Business logic and domain rules  
+- **Repository** → Data access via Spring Data JPA  
+- **Database** → H2 (dev/test), PostgreSQL (planned)  
+- **DTOs ↔ Entities** → Clear separation between API models and persistence models  
+
+</details>
+
+<details>
+  <summary><strong>⚙️ Cross‑Cutting Concerns</strong></summary>
+
+- **GlobalExceptionHandler** for consistent error responses  
+- **Security layer** with JWT, RBAC, filters, handlers, and centralized rules  
+- **Validation** using Jakarta Bean Validation  
+- **Swagger/OpenAPI** for interactive API documentation  
+
+</details>
+
+The result is a modular and maintainable structure where each layer has a clear responsibility and can be tested independently.
+
 
