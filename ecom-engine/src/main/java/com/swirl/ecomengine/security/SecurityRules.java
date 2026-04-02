@@ -9,6 +9,14 @@ public final class SecurityRules {
             "/auth/**"
     };
 
+    // Swagger (open only in dev)
+    public static final String[] SWAGGER = {
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/v3/api-docs.yaml"
+    };
+
     // Endpoints accessible to authenticated users (GET)
     public static final String[] USER_READ = {
             "/products/**",

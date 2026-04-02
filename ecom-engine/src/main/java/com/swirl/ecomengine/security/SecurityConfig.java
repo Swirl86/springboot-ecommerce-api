@@ -16,6 +16,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static com.swirl.ecomengine.security.SecurityRules.*;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -50,6 +52,9 @@ public class SecurityConfig {
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SecurityRules.PUBLIC).permitAll()
+
+                        // Swagger is denied here; in 'dev' this is overridden by SwaggerSecurityConfig
+                        .requestMatchers(SWAGGER).denyAll()
 
                         // USER
                         .requestMatchers(HttpMethod.GET, SecurityRules.USER_READ).authenticated()
