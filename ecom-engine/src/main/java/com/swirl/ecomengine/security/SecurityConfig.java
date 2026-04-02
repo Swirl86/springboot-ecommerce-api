@@ -50,7 +50,15 @@ public class SecurityConfig {
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SecurityRules.PUBLIC).permitAll()
+
+                        // USER
                         .requestMatchers(HttpMethod.GET, SecurityRules.USER_READ).authenticated()
+                        // USER CART
+                        .requestMatchers(HttpMethod.POST, SecurityRules.USER_WRITE).authenticated()
+                        .requestMatchers(HttpMethod.PUT, SecurityRules.USER_WRITE).authenticated()
+                        .requestMatchers(HttpMethod.DELETE, SecurityRules.USER_WRITE).authenticated()
+
+                        // ADMIN
                         .requestMatchers(HttpMethod.POST, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")

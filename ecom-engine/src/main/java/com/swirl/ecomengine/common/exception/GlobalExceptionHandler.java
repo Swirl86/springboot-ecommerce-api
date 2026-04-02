@@ -2,6 +2,7 @@ package com.swirl.ecomengine.common.exception;
 
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
 import com.swirl.ecomengine.auth.exception.JwtValidationException;
+import com.swirl.ecomengine.security.user.exception.AuthenticatedUserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -155,7 +156,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(
             InvalidCredentialsException ex,
             HttpServletRequest request
-    ) {
+    ) { // Wrong email or password
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 new ErrorResponse(
                         HttpStatus.UNAUTHORIZED.value(),
@@ -170,7 +171,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleJwtValidation(
             JwtValidationException ex,
             HttpServletRequest request
-    ) {
+    ) { // Token not valid
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new ErrorResponse(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    @ExceptionHandler(AuthenticatedUserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticatedUserNotFound(
+            AuthenticatedUserNotFoundException ex,
+            HttpServletRequest request
+    ) { // Token is ok but user not found
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                 new ErrorResponse(
                         HttpStatus.UNAUTHORIZED.value(),
