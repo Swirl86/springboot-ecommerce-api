@@ -21,12 +21,14 @@ public final class SecurityRules {
     public static final String[] USER_READ = {
             "/products/**",
             "/categories/**",
-            "/cart/**"
+            "/cart/**",
+            "/orders/**"
     };
 
     // Endpoints accessible to authenticated users (POST, PUT, DELETE)
     public static final String[] USER_WRITE = {
-            "/cart/**"
+            "/cart/**",
+            "/orders/checkout"
     };
 
     // Endpoints restricted to ADMIN role

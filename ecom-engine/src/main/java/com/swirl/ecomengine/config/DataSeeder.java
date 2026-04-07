@@ -1,10 +1,15 @@
 package com.swirl.ecomengine.config;
 
+import com.swirl.ecomengine.auth.AuthService;
+import com.swirl.ecomengine.auth.dto.RegisterRequest;
+import com.swirl.ecomengine.cart.service.CartService;
 import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.CategoryService;
 import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.product.ProductService;
 import com.swirl.ecomengine.product.dto.ProductRequest;
+import com.swirl.ecomengine.user.User;
+import com.swirl.ecomengine.user.UserService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -15,14 +20,36 @@ public class DataSeeder implements CommandLineRunner {
 
     private final ProductService productService;
     private final CategoryService categoryService;
+    private final AuthService authService;
+    private final UserService userService;
+    private final CartService cartService;
 
-    public DataSeeder(ProductService productService, CategoryService categoryService) {
+    public DataSeeder(
+            ProductService productService,
+            CategoryService categoryService,
+            AuthService authService,
+            UserService userService,
+            CartService cartService
+    ) {
         this.productService = productService;
         this.categoryService = categoryService;
+        this.authService = authService;
+        this.userService =userService;
+        this.cartService = cartService;
     }
 
     @Override
     public void run(String... args) {
+
+        // ---------------------------------------------------------
+        // Create test user
+        // ---------------------------------------------------------
+        var auth = authService.register(new RegisterRequest(
+                "test@gmail.com",
+                "12345678"
+        ));
+
+        User user = userService.getById(auth.userId());
 
         // -----------------------------
         // Create or fetch categories
@@ -36,9 +63,10 @@ public class DataSeeder implements CommandLineRunner {
         // -----------------------------
         // Electronics
         // -----------------------------
-        createProduct("Laptop", 999.99, "Powerful laptop", electronics);
-        createProduct("Smartphone", 699.99, "Latest model smartphone", electronics);
-        createProduct("Tablet", 399.99, "Portable tablet", electronics);
+        var laptopId = createProduct("Laptop", 999.99, "Powerful laptop", electronics);
+        var smartphoneId = createProduct("Smartphone", 699.99, "Latest model smartphone", electronics);
+        var tabletId = createProduct("Tablet", 399.99, "Portable tablet", electronics);
+
         createProduct("Bluetooth Speaker", 89.99, "Wireless speaker", electronics);
         createProduct("Smartwatch", 199.99, "Fitness tracking smartwatch", electronics);
 
@@ -71,6 +99,13 @@ public class DataSeeder implements CommandLineRunner {
         createProduct("Yoga Mat", 24.99, "Non-slip yoga mat", sports);
         createProduct("Dumbbells", 49.99, "Set of dumbbells", sports);
         createProduct("Running Shoes", 89.99, "Lightweight running shoes", sports);
+
+        // ---------------------------------------------------------
+        // Seed cart for test user
+        // ---------------------------------------------------------
+        cartService.addItem(user, laptopId, 3);
+        cartService.addItem(user, smartphoneId, 2);
+        cartService.addItem(user, tabletId, 1);
     }
 
     // ---------------------------------------------------------
@@ -84,12 +119,14 @@ public class DataSeeder implements CommandLineRunner {
                 });
     }
 
-    private void createProduct(String name, double price, String desc, Category category) {
-        productService.createProduct(new ProductRequest(
+    private Long createProduct(String name, double price, String desc, Category category) {
+        var created = productService.createProduct(new ProductRequest(
                 name,
                 price,
                 desc,
                 category.getId()
         ));
+
+        return created.id();
     }
 }

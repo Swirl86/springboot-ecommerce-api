@@ -2,6 +2,7 @@ package com.swirl.ecomengine.common.exception;
 
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
 import com.swirl.ecomengine.auth.exception.JwtValidationException;
+import com.swirl.ecomengine.order.exception.OrderAccessDeniedException;
 import com.swirl.ecomengine.security.user.exception.AuthenticatedUserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -114,6 +115,20 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(OrderAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleOrderAccessDenied(
+            OrderAccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                new ErrorResponse(
+                        HttpStatus.FORBIDDEN.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
 
     // ============================================================
     // 409 — Custom Conflict exceptions (e.g. duplicates)

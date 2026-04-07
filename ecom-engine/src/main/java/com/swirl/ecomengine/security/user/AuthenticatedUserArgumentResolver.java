@@ -4,14 +4,12 @@ import com.swirl.ecomengine.security.user.exception.AuthenticatedUserNotFoundExc
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
 import org.springframework.core.MethodParameter;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-
 
 @Component
 public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentResolver {
@@ -37,14 +35,16 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
     ) {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication instanceof UsernamePasswordAuthenticationToken token) {
-            String email = token.getName();
-            return userRepository.findByEmail(email)
-                    .orElseThrow(() ->
-                            new AuthenticatedUserNotFoundException("Authenticated user not found")
-                    );
+        if (authentication == null) {
+            throw new AuthenticatedUserNotFoundException("No authentication found");
         }
 
-        throw new AuthenticatedUserNotFoundException("No authenticated user in security context");
+        // Works for UsernamePasswordAuthenticationToken AND custom JWT auth
+        String email = authentication.getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new AuthenticatedUserNotFoundException("Authenticated user not found: " + email)
+                );
     }
 }
