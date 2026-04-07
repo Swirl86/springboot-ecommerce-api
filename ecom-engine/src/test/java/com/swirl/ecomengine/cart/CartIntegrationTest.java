@@ -15,26 +15,20 @@ import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@ActiveProfiles("test-integration")
-class CartIntegrationTest {
+class CartIntegrationTest extends IntegrationTestBase {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-
 
     @Autowired private CartItemRepository cartItemRepository;
     @Autowired private CartRepository cartRepository;
@@ -49,12 +43,6 @@ class CartIntegrationTest {
 
     @BeforeEach
     void setup() {
-        cartItemRepository.deleteAll();
-        cartRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        userRepository.deleteAll();
-
         // ---------------------------------------------------------
         // Create USER
         // ---------------------------------------------------------

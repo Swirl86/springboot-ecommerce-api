@@ -2,6 +2,8 @@ package com.swirl.ecomengine.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
+import com.swirl.ecomengine.cart.CartRepository;
+import com.swirl.ecomengine.cart.item.CartItemRepository;
 import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.CategoryRepository;
 import com.swirl.ecomengine.product.ProductRepository;
@@ -12,25 +14,17 @@ import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import testsupport.IntegrationTestConfig;
+import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(IntegrationTestConfig.class)
-@ActiveProfiles("test-integration")
-class SecurityIntegrationTest {
+class SecurityIntegrationTest extends IntegrationTestBase {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
@@ -38,6 +32,8 @@ class SecurityIntegrationTest {
     @Autowired private UserRepository userRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private ProductRepository productRepository;
+    @Autowired private CartRepository cartRepository;
+    @Autowired private CartItemRepository cartItemRepository;
 
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
@@ -48,10 +44,6 @@ class SecurityIntegrationTest {
 
     @BeforeEach
     void setup() {
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        userRepository.deleteAll();
-
         // Create ADMIN
         User admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
         adminToken = jwtService.generateToken(admin);

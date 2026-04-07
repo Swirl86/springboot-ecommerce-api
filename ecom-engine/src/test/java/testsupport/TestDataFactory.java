@@ -3,11 +3,18 @@ package testsupport;
 import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
+import com.swirl.ecomengine.cart.Cart;
+import com.swirl.ecomengine.cart.item.CartItem;
 import com.swirl.ecomengine.category.Category;
+import com.swirl.ecomengine.order.Order;
+import com.swirl.ecomengine.order.OrderStatus;
+import com.swirl.ecomengine.order.item.OrderItem;
 import com.swirl.ecomengine.product.Product;
 import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDateTime;
 
 /**
  * Factory class for creating consistent and reusable test data objects.
@@ -101,5 +108,44 @@ public class TestDataFactory {
                 "Powerful laptop",
                 category
         );
+    }
+
+    // ============================================================
+    // CART
+    // ============================================================
+
+    public static Cart cart(User user) {
+        return new Cart(user);
+    }
+
+    public static CartItem cartItem(Product product, int quantity) {
+        return new CartItem(
+                product,
+                quantity,
+                product.getPrice()
+        );
+    }
+
+    // ============================================================
+    // ORDER
+    // ============================================================
+
+    public static Order order(User user) {
+        return Order.builder()
+                .user(user)
+                .status(OrderStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public static OrderItem orderItem(Order order, Product product, int quantity) {
+        return OrderItem.builder()
+                .order(order)
+                .productId(product.getId())
+                .productName(product.getName())
+                .price(product.getPrice())
+                .quantity(quantity)
+                .build();
     }
 }

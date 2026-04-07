@@ -10,25 +10,17 @@ import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import testsupport.IntegrationTestConfig;
+import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(IntegrationTestConfig.class)
-@ActiveProfiles("test-integration")
-class ProductIntegrationTest {
+class ProductIntegrationTest extends IntegrationTestBase {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
@@ -36,6 +28,7 @@ class ProductIntegrationTest {
     @Autowired private ProductRepository productRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private UserRepository userRepository;
+
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
 
@@ -45,14 +38,6 @@ class ProductIntegrationTest {
 
     @BeforeEach
     void setup() {
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        userRepository.deleteAll();
-
-        // Create category
-        Category category = categoryRepository.save(TestDataFactory.defaultCategory());
-        categoryId = category.getId();
-
         // Create ADMIN
         User admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
         adminToken = jwtService.generateToken(admin);
@@ -60,6 +45,10 @@ class ProductIntegrationTest {
         // Create USER
         User user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
+
+        // Create category
+        Category category = categoryRepository.save(TestDataFactory.defaultCategory());
+        categoryId = category.getId();
     }
 
     // ============================================================
