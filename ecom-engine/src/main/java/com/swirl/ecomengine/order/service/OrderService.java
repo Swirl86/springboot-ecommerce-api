@@ -2,6 +2,7 @@ package com.swirl.ecomengine.order.service;
 
 import com.swirl.ecomengine.cart.Cart;
 import com.swirl.ecomengine.cart.service.CartService;
+import com.swirl.ecomengine.common.exception.UnauthorizedException;
 import com.swirl.ecomengine.order.Order;
 import com.swirl.ecomengine.order.OrderRepository;
 import com.swirl.ecomengine.order.OrderStatus;
@@ -34,10 +35,14 @@ public class OrderService {
     @Transactional
     public Order placeOrder(User user) {
         if (user == null) {
-            throw new OrderBadRequestException("User cannot be null");
+            throw new UnauthorizedException("User must be authenticated");
         }
 
         Cart cart = cartService.getCart(user);
+
+        if (cart == null) {
+            throw new OrderBadRequestException("Cannot place order: cart is null");
+        }
 
         if (cart.getItems().isEmpty()) {
             throw new OrderBadRequestException("Cannot place order with empty cart");

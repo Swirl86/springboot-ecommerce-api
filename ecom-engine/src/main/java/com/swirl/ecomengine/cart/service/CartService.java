@@ -2,10 +2,16 @@ package com.swirl.ecomengine.cart.service;
 
 import com.swirl.ecomengine.cart.Cart;
 import com.swirl.ecomengine.cart.CartRepository;
+import com.swirl.ecomengine.cart.exception.CartItemNotFoundException;
+import com.swirl.ecomengine.cart.exception.CartNotFoundException;
 import com.swirl.ecomengine.cart.item.CartItem;
 import com.swirl.ecomengine.cart.item.CartItemRepository;
+import com.swirl.ecomengine.common.exception.BadRequestException;
+import com.swirl.ecomengine.common.exception.ForbiddenException;
+import com.swirl.ecomengine.common.exception.UnauthorizedException;
 import com.swirl.ecomengine.product.Product;
 import com.swirl.ecomengine.product.ProductRepository;
+import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import com.swirl.ecomengine.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +38,10 @@ public class CartService {
     // ---------------------------------------------------------
     @Transactional
     public Cart getOrCreateCart(User user) {
+        if (user == null) {
+            throw new UnauthorizedException("User must be authenticated");
+        }
+
         return cartRepository.findByUser(user)
                 .orElseGet(() -> cartRepository.save(new Cart(user)));
     }
@@ -41,10 +51,14 @@ public class CartService {
     // ---------------------------------------------------------
     @Transactional
     public Cart addItem(User user, Long productId, int quantity) {
+        if (quantity < 1) {
+            throw new BadRequestException("Quantity must be at least 1");
+        }
+
         Cart cart = getOrCreateCart(user);
 
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
         CartItem item = new CartItem(product, quantity, product.getPrice());
         cart.addItem(item);
@@ -58,13 +72,17 @@ public class CartService {
     // ---------------------------------------------------------
     @Transactional
     public Cart updateItem(User user, Long itemId, int quantity) {
+        if (quantity < 1) {
+            throw new BadRequestException("Quantity must be at least 1");
+        }
+
         Cart cart = getOrCreateCart(user);
 
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("Item not found"));
+                .orElseThrow(() -> new CartItemNotFoundException(itemId));
 
         if (!item.getCart().getId().equals(cart.getId())) {
-            throw new IllegalArgumentException("Item does not belong to this cart");
+            throw new ForbiddenException("Item does not belong to this cart");
         }
 
         item.setQuantity(quantity);
@@ -79,7 +97,11 @@ public class CartService {
         Cart cart = getOrCreateCart(user);
 
         CartItem item = cartItemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException("Item not found"));
+                .orElseThrow(() -> new CartItemNotFoundException(itemId));
+
+        if (!item.getCart().getId().equals(cart.getId())) {
+            throw new ForbiddenException("Item does not belong to this cart");
+        }
 
         cart.removeItem(item);
         cartItemRepository.delete(item);
@@ -92,8 +114,9 @@ public class CartService {
     // ---------------------------------------------------------
     @Transactional
     public Cart clearCart(User user) {
-        Cart cart = getOrCreateCart(user);
-        cart.getItems().clear(); // orphanRemoval = true handles deletion
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new CartNotFoundException(user.getId()));
+        cart.getItems().clear();
         return cartRepository.save(cart);
     }
 

@@ -3,12 +3,16 @@ package com.swirl.ecomengine.cart;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.cart.controller.CartController;
 import com.swirl.ecomengine.cart.dto.CartItemRequest;
-import com.swirl.ecomengine.cart.dto.CartItemUpdateRequest;
 import com.swirl.ecomengine.cart.dto.CartItemResponse;
+import com.swirl.ecomengine.cart.dto.CartItemUpdateRequest;
 import com.swirl.ecomengine.cart.dto.CartResponse;
+import com.swirl.ecomengine.cart.exception.CartItemNotFoundException;
+import com.swirl.ecomengine.cart.exception.CartNotFoundException;
 import com.swirl.ecomengine.cart.item.CartItem;
 import com.swirl.ecomengine.cart.service.CartService;
+import com.swirl.ecomengine.common.exception.ForbiddenException;
 import com.swirl.ecomengine.product.Product;
+import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import com.swirl.ecomengine.user.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,9 +29,10 @@ import testsupport.SecurityTestConfigMinimal;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CartController.class)
 @Import(SecurityTestConfigMinimal.class)
@@ -92,6 +97,36 @@ class CartControllerTest {
     }
 
     // ---------------------------------------------------------
+    // ADD ITEM (product not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void addItem_shouldReturnNotFound_whenProductDoesNotExist() throws Exception {
+        CartItemRequest request = new CartItemRequest(999L, 2);
+
+        Mockito.when(cartService.addItem(mockUser, 999L, 2))
+                .thenThrow(new ProductNotFoundException(999L));
+
+        mockMvc.perform(post("/cart/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Product with id 999 not found"));
+    }
+
+    // ---------------------------------------------------------
+    // ADD ITEM (invalid quantity → 400)
+    // ---------------------------------------------------------
+    @Test
+    void addItem_shouldReturnBadRequest_whenQuantityIsInvalid() throws Exception {
+        CartItemRequest request = new CartItemRequest(1L, 0);
+
+        mockMvc.perform(post("/cart/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ---------------------------------------------------------
     // UPDATE ITEM
     // ---------------------------------------------------------
     @Test
@@ -126,6 +161,40 @@ class CartControllerTest {
     }
 
     // ---------------------------------------------------------
+    // UPDATE ITEM (item not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void updateItem_shouldReturnNotFound_whenItemDoesNotExist() throws Exception {
+        CartItemUpdateRequest request = new CartItemUpdateRequest(5);
+
+        Mockito.when(cartService.updateItem(mockUser, 999L, 5))
+                .thenThrow(new CartItemNotFoundException(999L));
+
+        mockMvc.perform(put("/cart/items/999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cart item with id 999 not found"));
+    }
+
+    // ---------------------------------------------------------
+    // UPDATE ITEM (forbidden → 403)
+    // ---------------------------------------------------------
+    @Test
+    void updateItem_shouldReturnForbidden_whenItemBelongsToAnotherUser() throws Exception {
+        CartItemUpdateRequest request = new CartItemUpdateRequest(5);
+
+        Mockito.when(cartService.updateItem(mockUser, 10L, 5))
+                .thenThrow(new ForbiddenException("You do not own this cart item"));
+
+        mockMvc.perform(put("/cart/items/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You do not own this cart item"));
+    }
+
+    // ---------------------------------------------------------
     // REMOVE ITEM
     // ---------------------------------------------------------
     @Test
@@ -141,6 +210,19 @@ class CartControllerTest {
         mockMvc.perform(delete("/cart/items/10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isEmpty());
+    }
+
+    // ---------------------------------------------------------
+    // REMOVE ITEM (item not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void removeItem_shouldReturnNotFound_whenItemDoesNotExist() throws Exception {
+        Mockito.when(cartService.removeItem(mockUser, 999L))
+                .thenThrow(new CartItemNotFoundException(999L));
+
+        mockMvc.perform(delete("/cart/items/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cart item with id 999 not found"));
     }
 
     // ---------------------------------------------------------
@@ -162,6 +244,20 @@ class CartControllerTest {
     }
 
     // ---------------------------------------------------------
+    // CLEAR CART (cart not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void clearCart_shouldReturnNotFound_whenCartDoesNotExist() throws Exception {
+        Mockito.when(cartService.clearCart(mockUser))
+                .thenThrow(new CartNotFoundException(mockUser.getId()));
+
+        mockMvc.perform(delete("/cart"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message")
+                        .value("Cart with id 1 not found"));
+    }
+
+    // ---------------------------------------------------------
     // GET CART
     // ---------------------------------------------------------
     @Test
@@ -177,5 +273,19 @@ class CartControllerTest {
         mockMvc.perform(get("/cart"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isEmpty());
+    }
+
+    // ---------------------------------------------------------
+    // GET CART (cart not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void getCart_shouldReturnNotFound_whenCartDoesNotExist() throws Exception {
+        Mockito.when(cartService.getCart(mockUser))
+                .thenThrow(new CartNotFoundException(mockUser.getId()));
+
+        mockMvc.perform(get("/cart"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message")
+                        .value("Cart with id 1 not found"));
     }
 }

@@ -1,8 +1,8 @@
 package com.swirl.ecomengine.category.controller;
 
-import com.swirl.ecomengine.category.CategoryService;
 import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.dto.CategoryResponse;
+import com.swirl.ecomengine.category.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

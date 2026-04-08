@@ -1,8 +1,13 @@
-package com.swirl.ecomengine.category;
+package com.swirl.ecomengine.category.service;
 
+import com.swirl.ecomengine.category.Category;
+import com.swirl.ecomengine.category.CategoryMapper;
+import com.swirl.ecomengine.category.CategoryRepository;
 import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
+import com.swirl.ecomengine.common.exception.BadRequestException;
+import com.swirl.ecomengine.common.exception.ConflictException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,9 +32,18 @@ public class CategoryService {
                 .orElseThrow(() -> new CategoryNotFoundException(id));
     }
 
+    // ---------------------------------------------------------
+    // GET BY NAME
+    // ---------------------------------------------------------
     public Optional<Category> findByName(String name) {
         return repo.findByNameIgnoreCase(name);
     }
+
+    public Category findByNameOrThrow(String name) {
+        return repo.findByNameIgnoreCase(name)
+                .orElseThrow(() -> new CategoryNotFoundException(name));
+    }
+
 
     // ---------------------------------------------------------
     // API: Return response DTO
@@ -51,7 +65,17 @@ public class CategoryService {
     // CREATE
     // ---------------------------------------------------------
     public CategoryResponse create(CategoryRequest request) {
+
+        if (request.name() == null || request.name().isBlank()) {
+            throw new BadRequestException("Category name cannot be empty");
+        }
+
+        if (repo.findByNameIgnoreCase(request.name()).isPresent()) {
+            throw new ConflictException("Category with name '" + request.name() + "' already exists");
+        }
+
         Category saved = repo.save(new Category(null, request.name()));
+
         return mapper.toResponse(saved);
     }
 
@@ -59,10 +83,16 @@ public class CategoryService {
     // UPDATE
     // ---------------------------------------------------------
     public CategoryResponse update(Long id, CategoryRequest request) {
+
+        if (request.name() == null || request.name().isBlank()) {
+            throw new BadRequestException("Category name cannot be empty");
+        }
+
         Category category = getById(id);
         category.setName(request.name());
+
         Category updated = repo.save(category);
-        return new CategoryResponse(updated.getId(), updated.getName());
+        return mapper.toResponse(updated);
     }
 
     // ---------------------------------------------------------

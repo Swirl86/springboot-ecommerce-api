@@ -1,7 +1,7 @@
 package com.swirl.ecomengine.product;
 
 import com.swirl.ecomengine.category.Category;
-import com.swirl.ecomengine.category.CategoryService;
+import com.swirl.ecomengine.category.service.CategoryService;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;

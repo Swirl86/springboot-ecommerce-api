@@ -5,6 +5,8 @@ import com.swirl.ecomengine.auth.controller.AuthController;
 import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
+import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
+import com.swirl.ecomengine.common.exception.ConflictException;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,18 +36,16 @@ class AuthControllerTest {
     @MockBean private AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
 
     // ============================================================
-    // register
+    // register (success)
     // ============================================================
 
     @Test
     void register_shouldReturnAuthResponse() throws Exception {
-        // ---------- Arrange ----------
         RegisterRequest request = TestDataFactory.registerRequest();
         AuthResponse response = TestDataFactory.authResponse();
 
         when(authService.register(request)).thenReturn(response);
 
-        // ---------- Act & Assert ----------
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -55,23 +55,87 @@ class AuthControllerTest {
     }
 
     // ============================================================
-    // login
+    // register (duplicate email → 409)
+    // ============================================================
+
+    @Test
+    void register_shouldReturnConflict_whenEmailExists() throws Exception {
+        RegisterRequest request = new RegisterRequest("test@example.com", "password123");
+
+        when(authService.register(request))
+                .thenThrow(new ConflictException("Email already in use"));
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Email already in use"));
+    }
+
+    // ============================================================
+    // register (empty email → validation → 400)
+    // ============================================================
+
+    @Test
+    void register_shouldReturnBadRequest_whenEmailIsEmpty() throws Exception {
+        RegisterRequest request = new RegisterRequest("", "password123");
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("{email=Email must be between 2 and 50 characters}"));
+    }
+
+    // ============================================================
+    // register (empty password → validation → 400)
+    // ============================================================
+
+    @Test
+    void register_shouldReturnBadRequest_whenPasswordIsEmpty() throws Exception {
+        RegisterRequest request = new RegisterRequest("test@example.com", "");
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("{password=Password must be at least 8 characters}"));
+    }
+
+    // ============================================================
+    // login (success)
     // ============================================================
 
     @Test
     void login_shouldReturnAuthResponse() throws Exception {
-        // ---------- Arrange ----------
         LoginRequest request = TestDataFactory.loginRequest();
         AuthResponse response = TestDataFactory.authResponse();
 
         when(authService.login(request)).thenReturn(response);
 
-        // ---------- Act & Assert ----------
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@example.com"))
                 .andExpect(jsonPath("$.token").value("jwt-token"));
+    }
+
+    // ============================================================
+    // login (invalid credentials → 401)
+    // ============================================================
+
+    @Test
+    void login_shouldReturnUnauthorized_whenCredentialsAreInvalid() throws Exception {
+        LoginRequest request = new LoginRequest("test@example.com", "wrongpass");
+
+        when(authService.login(request))
+                .thenThrow(new InvalidCredentialsException());
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid email or password"));
     }
 }

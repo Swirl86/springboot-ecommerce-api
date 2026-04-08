@@ -1,23 +1,22 @@
 package com.swirl.ecomengine.common.exception;
 
-import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
-import com.swirl.ecomengine.auth.exception.JwtValidationException;
-import com.swirl.ecomengine.order.exception.OrderAccessDeniedException;
-import com.swirl.ecomengine.security.user.exception.AuthenticatedUserNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -46,41 +45,7 @@ public class GlobalExceptionHandler {
     }
 
     // ============================================================
-    // 404 — Custom NotFound exceptions
-    // ============================================================
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(
-            NotFoundException ex,
-            HttpServletRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                new ErrorResponse(
-                        HttpStatus.NOT_FOUND.value(),
-                        ex.getMessage(),
-                        LocalDateTime.now(),
-                        request.getRequestURI()
-                )
-        );
-    }
-
-    // JPA's own "not found" (e.g. getReferenceById)
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEntityNotFound(
-            EntityNotFoundException ex,
-            HttpServletRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                new ErrorResponse(
-                        HttpStatus.NOT_FOUND.value(),
-                        ex.getMessage(),
-                        LocalDateTime.now(),
-                        request.getRequestURI()
-                )
-        );
-    }
-
-    // ============================================================
-    // 400 — Custom BadRequest exceptions
+    // 400 — BadRequest
     // ============================================================
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(
@@ -97,27 +62,81 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // ============================================================
-    // 403 — Custom Forbidden exceptions
-    // ============================================================
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(
-            AccessDeniedException ex,
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class
+    })
+    public ResponseEntity<ErrorResponse> handleMalformedRequest(
+            Exception ex,
             HttpServletRequest request
     ) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+        return ResponseEntity.badRequest().body(
                 new ErrorResponse(
-                        HttpStatus.FORBIDDEN.value(),
-                        "Access denied",
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Malformed request: " + ex.getMessage(),
                         LocalDateTime.now(),
                         request.getRequestURI()
                 )
         );
     }
 
-    @ExceptionHandler(OrderAccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleOrderAccessDenied(
-            OrderAccessDeniedException ex,
+    // ============================================================
+    // 404 — NotFound
+    // ============================================================
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(
+            NotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(
+            EntityNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                new ErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // ============================================================
+    // 401 — Unauthorized
+    // ============================================================
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            UnauthorizedException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new ErrorResponse(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        ex.getMessage(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                )
+        );
+    }
+
+    // ============================================================
+    // 403 — Forbidden
+    // ============================================================
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(
+            ForbiddenException ex,
             HttpServletRequest request
     ) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
@@ -131,7 +150,7 @@ public class GlobalExceptionHandler {
     }
 
     // ============================================================
-    // 409 — Custom Conflict exceptions (e.g. duplicates)
+    // 409 — Conflict
     // ============================================================
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflict(
@@ -165,67 +184,19 @@ public class GlobalExceptionHandler {
     }
 
     // ============================================================
-    // 401 — Authentication failures
-    // ============================================================
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidCredentials(
-            InvalidCredentialsException ex,
-            HttpServletRequest request
-    ) { // Wrong email or password
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new ErrorResponse(
-                        HttpStatus.UNAUTHORIZED.value(),
-                        ex.getMessage(),
-                        LocalDateTime.now(),
-                        request.getRequestURI()
-                )
-        );
-    }
-
-    @ExceptionHandler(JwtValidationException.class)
-    public ResponseEntity<ErrorResponse> handleJwtValidation(
-            JwtValidationException ex,
-            HttpServletRequest request
-    ) { // Token not valid
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new ErrorResponse(
-                        HttpStatus.UNAUTHORIZED.value(),
-                        ex.getMessage(),
-                        LocalDateTime.now(),
-                        request.getRequestURI()
-                )
-        );
-    }
-
-    @ExceptionHandler(AuthenticatedUserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticatedUserNotFound(
-            AuthenticatedUserNotFoundException ex,
-            HttpServletRequest request
-    ) { // Token is ok but user not found
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new ErrorResponse(
-                        HttpStatus.UNAUTHORIZED.value(),
-                        ex.getMessage(),
-                        LocalDateTime.now(),
-                        request.getRequestURI()
-                )
-        );
-    }
-
-    // ============================================================
-    // 500 — Unexpected server errors
-    // Catches any unhandled exception to prevent raw stack traces
-    // from leaking to the client and ensures a consistent error format.
+    // 500 — Unexpected errors
     // ============================================================
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(
             Exception ex,
             HttpServletRequest request
     ) {
+        log.error("Unexpected error", ex);
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 new ErrorResponse(
                         HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        ex.getMessage(),
+                        "An unexpected error occurred",
                         LocalDateTime.now(),
                         request.getRequestURI()
                 )

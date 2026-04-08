@@ -16,7 +16,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 class OrderServiceTest {
@@ -120,6 +121,18 @@ class OrderServiceTest {
     }
 
     // ---------------------------------------------------------
+    // CREATE ORDER (cart missing)
+    // ---------------------------------------------------------
+    @Test
+    void placeOrder_throwsBadRequest_whenCartIsNull() {
+        when(cartService.getCart(user)).thenReturn(null);
+
+        assertThatThrownBy(() -> orderService.placeOrder(user))
+                .isInstanceOf(OrderBadRequestException.class)
+                .hasMessageContaining("cart");
+    }
+
+    // ---------------------------------------------------------
     // GET ORDER HISTORY
     // ---------------------------------------------------------
 
@@ -134,6 +147,19 @@ class OrderServiceTest {
         var result = orderService.getOrderHistory(user);
 
         assertThat(result).hasSize(2);
+    }
+
+    // ---------------------------------------------------------
+    // GET ORDER HISTORY (empty)
+    // ---------------------------------------------------------
+    @Test
+    void getOrderHistory_returnsEmptyList_whenNoOrdersExist() {
+        when(orderRepository.findByUserOrderByCreatedAtDesc(user))
+                .thenReturn(List.of());
+
+        var result = orderService.getOrderHistory(user);
+
+        assertThat(result).isEmpty();
     }
 
     // ---------------------------------------------------------
@@ -153,6 +179,21 @@ class OrderServiceTest {
         var result = orderService.getActiveOrders(user);
 
         assertThat(result).hasSize(2);
+    }
+
+    // ---------------------------------------------------------
+    // GET ACTIVE ORDERS (empty)
+    // ---------------------------------------------------------
+    @Test
+    void getActiveOrders_returnsEmptyList_whenNoActiveOrdersExist() {
+        when(orderRepository.findByUserAndStatusIn(
+                eq(user),
+                eq(List.of(OrderStatus.PENDING, OrderStatus.PROCESSING))
+        )).thenReturn(List.of());
+
+        var result = orderService.getActiveOrders(user);
+
+        assertThat(result).isEmpty();
     }
 
     // ---------------------------------------------------------

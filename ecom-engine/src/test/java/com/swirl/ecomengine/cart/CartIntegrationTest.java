@@ -23,7 +23,8 @@ import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class CartIntegrationTest extends IntegrationTestBase {
 
@@ -91,6 +92,29 @@ class CartIntegrationTest extends IntegrationTestBase {
     }
 
     // ---------------------------------------------------------
+    // ADD ITEM (product not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void addItem_shouldReturnNotFound_whenProductDoesNotExist() throws Exception {
+        CartItemRequest request = new CartItemRequest(999L, 2);
+
+        authenticatedPost("/cart/items", request)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Product with id 999 not found"));
+    }
+
+    // ---------------------------------------------------------
+    // ADD ITEM (invalid quantity → 400)
+    // ---------------------------------------------------------
+    @Test
+    void addItem_shouldReturnBadRequest_whenQuantityIsInvalid() throws Exception {
+        CartItemRequest request = new CartItemRequest(product.getId(), 0);
+
+        authenticatedPost("/cart/items", request)
+                .andExpect(status().isBadRequest());
+    }
+
+    // ---------------------------------------------------------
     // UPDATE ITEM
     // ---------------------------------------------------------
     @Test
@@ -115,6 +139,21 @@ class CartIntegrationTest extends IntegrationTestBase {
     }
 
     // ---------------------------------------------------------
+    // UPDATE ITEM (item not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void updateItem_shouldReturnNotFound_whenItemDoesNotExist() throws Exception {
+        CartItemUpdateRequest request = new CartItemUpdateRequest(5);
+
+        mockMvc.perform(put("/cart/items/999")
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cart item with id 999 not found"));
+    }
+
+    // ---------------------------------------------------------
     // REMOVE ITEM
     // ---------------------------------------------------------
     @Test
@@ -130,6 +169,17 @@ class CartIntegrationTest extends IntegrationTestBase {
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isEmpty());
+    }
+
+    // ---------------------------------------------------------
+    // REMOVE ITEM (item not found → 404)
+    // ---------------------------------------------------------
+    @Test
+    void removeItem_shouldReturnNotFound_whenItemDoesNotExist() throws Exception {
+        mockMvc.perform(delete("/cart/items/999")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Cart item with id 999 not found"));
     }
 
     // ---------------------------------------------------------
@@ -158,5 +208,4 @@ class CartIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isEmpty());
     }
-
 }

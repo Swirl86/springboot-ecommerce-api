@@ -4,6 +4,7 @@ import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
+import com.swirl.ecomengine.common.exception.ConflictException;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
@@ -16,7 +17,8 @@ import testsupport.TestDataFactory;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 class AuthServiceTest {
@@ -35,7 +37,7 @@ class AuthServiceTest {
     }
 
     // ============================================================
-    // register
+    // register (success)
     // ============================================================
 
     @Test
@@ -51,10 +53,24 @@ class AuthServiceTest {
         assertThat(response.email()).isEqualTo("test@example.com");
         assertThat(response.token()).isEqualTo("jwt-token");
 
-        // Verify that the saved user had the encoded password
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
         assertThat(captor.getValue().getPassword()).isEqualTo("hashed");
+    }
+
+    // ============================================================
+    // register (duplicate email)
+    // ============================================================
+
+    @Test
+    void register_shouldThrowConflict_whenEmailExists() {
+        RegisterRequest request = new RegisterRequest("test@example.com", "password123");
+
+        when(userRepository.existsByEmail(request.email())).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Email already in use");
     }
 
     // ============================================================
