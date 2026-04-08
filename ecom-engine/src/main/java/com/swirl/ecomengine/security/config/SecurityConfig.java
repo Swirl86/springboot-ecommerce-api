@@ -1,10 +1,10 @@
 package com.swirl.ecomengine.security.config;
 
-import com.swirl.ecomengine.security.util.AuthRateLimiter;
-import com.swirl.ecomengine.security.util.SecurityRules;
 import com.swirl.ecomengine.security.handler.JsonAccessDeniedHandler;
 import com.swirl.ecomengine.security.handler.JsonAuthenticationEntryPoint;
 import com.swirl.ecomengine.security.jwt.JwtAuthenticationFilter;
+import com.swirl.ecomengine.security.util.AuthRateLimiter;
+import com.swirl.ecomengine.security.util.SecurityRules;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import static com.swirl.ecomengine.security.util.SecurityRules.*;
+import static com.swirl.ecomengine.security.util.SecurityRules.SWAGGER;
 
 @Configuration
 @EnableWebSecurity
