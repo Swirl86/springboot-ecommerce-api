@@ -3,10 +3,10 @@ package com.swirl.ecomengine.order;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.order.controller.OrderController;
 import com.swirl.ecomengine.order.dto.OrderResponse;
-import com.swirl.ecomengine.order.service.OrderService;
-import com.swirl.ecomengine.order.exception.OrderNotFoundException;
 import com.swirl.ecomengine.order.exception.OrderAccessDeniedException;
 import com.swirl.ecomengine.order.exception.OrderBadRequestException;
+import com.swirl.ecomengine.order.exception.OrderNotFoundException;
+import com.swirl.ecomengine.order.service.OrderService;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import com.swirl.ecomengine.user.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,8 +26,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(OrderController.class)
 @Import({SecurityTestConfigMinimal.class, WebMvcTestConfig.class})

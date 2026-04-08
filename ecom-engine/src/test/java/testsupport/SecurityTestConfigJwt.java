@@ -1,9 +1,9 @@
 package testsupport;
 
-import com.swirl.ecomengine.security.util.AuthRateLimiter;
 import com.swirl.ecomengine.security.config.CorsConfig;
 import com.swirl.ecomengine.security.jwt.JwtAuthenticationFilter;
 import com.swirl.ecomengine.security.jwt.JwtService;
+import com.swirl.ecomengine.security.util.AuthRateLimiter;
 import com.swirl.ecomengine.user.UserRepository;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;

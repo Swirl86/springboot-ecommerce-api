@@ -15,10 +15,11 @@ import com.swirl.ecomengine.user.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.function.Function;
 
 /**
  * Factory class for creating consistent and reusable test data objects.
- * Keeps integration tests clean and focused on behavior.
+ * Keeps tests clean and focused on behavior.
  */
 public class TestDataFactory {
 
@@ -56,6 +57,10 @@ public class TestDataFactory {
     // USERS
     // ============================================================
 
+    /**
+     * Creates an ADMIN user using a real PasswordEncoder.
+     * Used in integration tests.
+     */
     public static User admin(PasswordEncoder encoder) {
         return new User(
                 null,
@@ -65,11 +70,41 @@ public class TestDataFactory {
         );
     }
 
+    /**
+     * Creates a USER using a real PasswordEncoder.
+     * Used in integration tests.
+     */
     public static User user(PasswordEncoder encoder) {
         return new User(
                 null,
                 "user@example.com",
                 encoder.encode("password123"),
+                Role.USER
+        );
+    }
+
+    /**
+     * Creates an ADMIN using a fake encoder.
+     * Useful for service tests without Spring context.
+     */
+    public static User admin(Function<String, String> encoder) {
+        return new User(
+                null,
+                "admin@example.com",
+                encoder.apply("password123"),
+                Role.ADMIN
+        );
+    }
+
+    /**
+     * Creates a USER using a fake encoder (lambda).
+     * Used in unit tests (e.g., mapper tests) to avoid Spring context.
+     */
+    public static User user(Function<String, String> encoder) {
+        return new User(
+                null,
+                "user@example.com",
+                encoder.apply("password123"),
                 Role.USER
         );
     }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.cart.Cart;
 import com.swirl.ecomengine.cart.CartRepository;
 import com.swirl.ecomengine.cart.item.CartItem;
-import com.swirl.ecomengine.cart.item.CartItemRepository;
 import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.CategoryRepository;
 import com.swirl.ecomengine.product.Product;
@@ -24,7 +23,8 @@ import testsupport.TestDataFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class OrderIntegrationTest extends IntegrationTestBase {
 
