@@ -22,7 +22,8 @@ public final class SecurityRules {
             "/products/**",
             "/categories/**",
             "/cart/**",
-            "/orders/**"
+            "/orders",          // list orders
+            "/orders/*"         // get order by id
     };
 
     // Endpoints accessible to authenticated users (POST, PUT, DELETE)
@@ -34,6 +35,7 @@ public final class SecurityRules {
     // Endpoints restricted to ADMIN role
     public static final String[] ADMIN_WRITE = {
             "/products/**",
-            "/categories/**"
+            "/categories/**",
+            "/orders/**"
     };
 }

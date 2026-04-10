@@ -2,6 +2,7 @@ package com.swirl.ecomengine.order.controller;
 
 import com.swirl.ecomengine.order.OrderMapper;
 import com.swirl.ecomengine.order.dto.OrderResponse;
+import com.swirl.ecomengine.order.dto.UpdateOrderStatusRequest;
 import com.swirl.ecomengine.order.service.OrderService;
 import com.swirl.ecomengine.security.user.AuthenticatedUser;
 import com.swirl.ecomengine.user.User;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -106,5 +108,28 @@ public class OrderController {
             @PathVariable("id") Long id
     ) {
         return mapper.toResponse(service.getOrderById(user, id));
+    }
+
+    // ---------------------------------------------------------
+    // UPDATE ORDER STATUS (ADMIN ONLY)
+    // ---------------------------------------------------------
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Update order status",
+            description = "Allows ADMIN to update the status of an order. Users cannot update order status."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order status updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid status transition"),
+            @ApiResponse(responseCode = "403", description = "User is not ADMIN"),
+            @ApiResponse(responseCode = "404", description = "Order not found")
+    })
+    public OrderResponse updateStatus(
+            @PathVariable Long id,
+            @RequestBody UpdateOrderStatusRequest request
+    ) {
+        return mapper.toResponse(service.updateStatus(id, request.status()));
     }
 }

@@ -80,6 +80,43 @@ public class OrderService {
     }
 
     // ---------------------------------------------------------
+    // UPDATE ORDER STATUS (ADMIN ONLY)
+    // ---------------------------------------------------------
+    @Transactional
+    public Order updateStatus(Long id, OrderStatus newStatus) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException(id));
+
+        if (!isValidTransition(order.getStatus(), newStatus)) {
+            throw new OrderBadRequestException(
+                    "Invalid status transition: " + order.getStatus() + " → " + newStatus
+            );
+        }
+
+        order.setStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        return orderRepository.save(order);
+    }
+
+    /**
+     * Validates allowed order status transitions.
+     * <pre>
+     * PENDING     → PROCESSING, CANCELLED
+     * PROCESSING  → COMPLETED, CANCELLED
+     * COMPLETED   → (no transitions)
+     * CANCELLED   → (no transitions)
+     */
+    private boolean isValidTransition(OrderStatus from, OrderStatus to) {
+        return switch (from) {
+            case PENDING -> (to == OrderStatus.PROCESSING || to == OrderStatus.CANCELLED);
+            case PROCESSING -> (to == OrderStatus.COMPLETED || to == OrderStatus.CANCELLED);
+            default -> false;
+        };
+    }
+
+    // ---------------------------------------------------------
     // UPDATE ORDER STATUS
     // ---------------------------------------------------------
     @Transactional

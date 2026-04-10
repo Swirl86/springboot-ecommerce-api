@@ -69,6 +69,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                 )
 
                 // Filters

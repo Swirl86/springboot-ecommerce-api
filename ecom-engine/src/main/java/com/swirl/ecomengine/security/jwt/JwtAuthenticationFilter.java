@@ -96,7 +96,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String role,
             HttpServletRequest request
     ) {
+        // ------------------------------------------------------------
+        // Map JWT claim "role" - Spring Security authority "ROLE_X"
+        // ------------------------------------------------------------
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+
         var userDetails = new CustomUserDetails(user);
 
         var auth = new UsernamePasswordAuthenticationToken(
@@ -108,4 +112,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         return auth;
     }
+
 }
