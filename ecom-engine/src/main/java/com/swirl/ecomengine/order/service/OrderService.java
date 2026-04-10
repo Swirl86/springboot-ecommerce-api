@@ -10,7 +10,9 @@ import com.swirl.ecomengine.order.exception.OrderAccessDeniedException;
 import com.swirl.ecomengine.order.exception.OrderBadRequestException;
 import com.swirl.ecomengine.order.exception.OrderNotFoundException;
 import com.swirl.ecomengine.order.item.OrderItem;
+import com.swirl.ecomengine.orderhistory.service.OrderHistoryService;
 import com.swirl.ecomengine.user.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +21,12 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final CartService cartService;
     private final OrderRepository orderRepository;
-
-    public OrderService(CartService cartService, OrderRepository orderRepository) {
-        this.cartService = cartService;
-        this.orderRepository = orderRepository;
-    }
+    private final OrderHistoryService historyService;
 
     // ---------------------------------------------------------
     // CREATE ORDER (Checkout)
@@ -83,10 +82,14 @@ public class OrderService {
     // UPDATE ORDER STATUS (ADMIN ONLY)
     // ---------------------------------------------------------
     @Transactional
-    public Order updateStatus(Long id, OrderStatus newStatus) {
+    public Order updateStatus(Long id, OrderStatus newStatus, User adminUser) {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
+
+        if (!adminUser.isAdmin()) {
+            throw new OrderAccessDeniedException();
+        }
 
         if (!isValidTransition(order.getStatus(), newStatus)) {
             throw new OrderBadRequestException(
@@ -94,10 +97,18 @@ public class OrderService {
             );
         }
 
+        // Capture old status BEFORE updating
+        OrderStatus oldStatus = order.getStatus();
+
+        // Update order
         order.setStatus(newStatus);
         order.setUpdatedAt(LocalDateTime.now());
+        Order saved = orderRepository.save(order);
 
-        return orderRepository.save(order);
+        // Log history entry
+        historyService.logStatusChange(order, oldStatus, newStatus, adminUser);
+
+        return saved;
     }
 
     /**
@@ -117,20 +128,7 @@ public class OrderService {
     }
 
     // ---------------------------------------------------------
-    // UPDATE ORDER STATUS
-    // ---------------------------------------------------------
-    @Transactional
-    public Order updateStatus(User user, Long id, OrderStatus newStatus) {
-        Order order = getOrderById(user, id);
-
-        order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
-
-        return orderRepository.save(order);
-    }
-
-    // ---------------------------------------------------------
-    // GET ORDER HISTORY
+    // GET ORDER HISTORY (USER)
     // ---------------------------------------------------------
     @Transactional(readOnly = true)
     public List<Order> getOrderHistory(User user) {

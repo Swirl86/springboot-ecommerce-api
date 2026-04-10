@@ -25,4 +25,15 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    // ---------------------------------------------------------
+    // ROLE HELPERS
+    // ---------------------------------------------------------
+    public boolean isAdmin() {
+        return this.role == Role.ADMIN;
+    }
+
+    public boolean isUser() {
+        return this.role == Role.USER;
+    }
 }

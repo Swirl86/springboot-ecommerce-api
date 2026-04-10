@@ -23,7 +23,8 @@ public final class SecurityRules {
             "/categories/**",
             "/cart/**",
             "/orders",          // list orders
-            "/orders/*"         // get order by id
+            "/orders/*",         // get order by id
+            "/orders/*/history/**"
     };
 
     // Endpoints accessible to authenticated users (POST, PUT, DELETE)
