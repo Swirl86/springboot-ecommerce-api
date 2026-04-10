@@ -55,8 +55,8 @@ class CategoryIntegrationTest extends IntegrationTestBase {
         userToken = jwtService.generateToken(user);
 
         // Mocka JWT-filter lookup
-        when(mockUserRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(admin));
-        when(mockUserRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(mockUserRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
+        when(mockUserRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
     }
 
     // ============================================================
