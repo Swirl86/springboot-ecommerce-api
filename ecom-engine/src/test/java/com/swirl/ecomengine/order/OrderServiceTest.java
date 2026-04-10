@@ -6,6 +6,7 @@ import com.swirl.ecomengine.order.exception.OrderAccessDeniedException;
 import com.swirl.ecomengine.order.exception.OrderBadRequestException;
 import com.swirl.ecomengine.order.exception.OrderNotFoundException;
 import com.swirl.ecomengine.order.service.OrderService;
+import com.swirl.ecomengine.orderhistory.service.OrderHistoryService;
 import com.swirl.ecomengine.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,9 @@ class OrderServiceTest {
     void setup() {
         cartService = mock(CartService.class);
         orderRepository = mock(OrderRepository.class);
-        orderService = new OrderService(cartService, orderRepository);
+        OrderHistoryService historyService = mock(OrderHistoryService.class);
+
+        orderService = new OrderService(cartService, orderRepository, historyService);
 
         user = new User();
         user.setId(1L);

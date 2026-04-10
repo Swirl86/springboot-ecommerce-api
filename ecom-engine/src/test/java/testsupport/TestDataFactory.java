@@ -70,6 +70,15 @@ public class TestDataFactory {
         );
     }
 
+    public static User admin(PasswordEncoder encoder, String email) {
+        return new User(
+                null,
+                email,
+                encoder.encode("password123"),
+                Role.ADMIN
+        );
+    }
+
     /**
      * Creates a USER using a real PasswordEncoder.
      * Used in integration tests.
@@ -78,6 +87,15 @@ public class TestDataFactory {
         return new User(
                 null,
                 "user@example.com",
+                encoder.encode("password123"),
+                Role.USER
+        );
+    }
+
+    public static User user(PasswordEncoder encoder, String email) {
+        return new User(
+                null,
+                email,
                 encoder.encode("password123"),
                 Role.USER
         );
