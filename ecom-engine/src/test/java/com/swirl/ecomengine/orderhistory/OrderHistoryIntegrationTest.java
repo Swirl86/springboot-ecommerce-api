@@ -18,7 +18,8 @@ import testsupport.TestDataFactory;
 import java.time.LocalDateTime;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class OrderHistoryIntegrationTest extends IntegrationTestBase {
 
@@ -31,6 +32,7 @@ class OrderHistoryIntegrationTest extends IntegrationTestBase {
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
 
+    private User admin;
     private String userToken;
     private String adminToken;
     private Order order;
@@ -38,7 +40,7 @@ class OrderHistoryIntegrationTest extends IntegrationTestBase {
     @BeforeEach
     void setup() {
         User user = userRepository.save(TestDataFactory.user(passwordEncoder));
-        User admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
+        admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
 
         userToken = jwtService.generateToken(user);
         adminToken = jwtService.generateToken(admin);
@@ -62,8 +64,9 @@ class OrderHistoryIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/orders/" + order.getId() + "/history")
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].fromStatus").value("PENDING"))
-                .andExpect(jsonPath("$[0].toStatus").value("PROCESSING"));
+                .andExpect(jsonPath("$.content[0].fromStatus").value("PENDING"))
+                .andExpect(jsonPath("$.content[0].toStatus").value("PROCESSING"))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     // ---------------------------------------------------------
@@ -86,6 +89,34 @@ class OrderHistoryIntegrationTest extends IntegrationTestBase {
     void admin_canViewAnyOrderHistory() throws Exception {
         mockMvc.perform(get("/orders/" + order.getId() + "/history")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1));
+    }
+
+    // ---------------------------------------------------------
+    // PAGINATION WORKS
+    // ---------------------------------------------------------
+    @Test
+    void pagination_shouldReturnCorrectMetadata() throws Exception {
+        // Add extra history entries
+        for (int i = 0; i < 25; i++) {
+            historyRepository.save(OrderHistoryEntry.builder()
+                    .order(order)
+                    .fromStatus(OrderStatus.PROCESSING)
+                    .toStatus(OrderStatus.SHIPPED)
+                    .changedAt(LocalDateTime.now().plusSeconds(i))
+                    .changedBy(admin)
+                    .build());
+
+        }
+
+        mockMvc.perform(get("/orders/" + order.getId() + "/history?page=0&size=20")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(20))
+                .andExpect(jsonPath("$.totalElements").value(26))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageable.pageSize").value(20));
     }
 }
