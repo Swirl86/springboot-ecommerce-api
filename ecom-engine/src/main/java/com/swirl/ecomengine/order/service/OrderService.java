@@ -13,6 +13,8 @@ import com.swirl.ecomengine.order.item.OrderItem;
 import com.swirl.ecomengine.orderhistory.service.OrderHistoryService;
 import com.swirl.ecomengine.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -147,8 +149,8 @@ public class OrderService {
     // GET ORDER HISTORY (USER)
     // ---------------------------------------------------------
     @Transactional(readOnly = true)
-    public List<Order> getOrderHistory(User user) {
-        return orderRepository.findByUserOrderByCreatedAtDesc(user);
+    public Page<Order> getOrderHistory(User user, Pageable pageable) {
+        return orderRepository.findByUser(user, pageable);
     }
 
     // ---------------------------------------------------------
