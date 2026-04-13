@@ -21,7 +21,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
+import java.time.LocalDateTime;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,6 +34,7 @@ class OrderIntegrationTest extends IntegrationTestBase {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
+    @Autowired private OrderRepository orderRepository;
     @Autowired private CartRepository cartRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private CategoryRepository categoryRepository;
@@ -39,32 +43,25 @@ class OrderIntegrationTest extends IntegrationTestBase {
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
 
+    private User user;
     private String userToken;
     private Product laptop;
     private Product tablet;
 
     @BeforeEach
     void setup() {
-        // ---------------------------------------------------------
         // USER
-        // ---------------------------------------------------------
-        User user = userRepository.save(TestDataFactory.user(passwordEncoder));
+        user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
 
-        // ---------------------------------------------------------
         // CATEGORY
-        // ---------------------------------------------------------
         Category category = categoryRepository.save(TestDataFactory.defaultCategory());
 
-        // ---------------------------------------------------------
         // PRODUCTS
-        // ---------------------------------------------------------
         laptop = productRepository.save(TestDataFactory.product("Laptop", 999.99, "Powerful laptop", category));
         tablet = productRepository.save(TestDataFactory.product("Tablet", 399.99, "Portable tablet", category));
 
-        // ---------------------------------------------------------
         // CART + ITEMS
-        // ---------------------------------------------------------
         Cart cart = new Cart(user);
 
         CartItem item1 = new CartItem(laptop, 2, laptop.getPrice());
@@ -99,5 +96,31 @@ class OrderIntegrationTest extends IntegrationTestBase {
 
         assertThat(json.get("items").size()).isEqualTo(2);
         assertThat(json.get("status").asText()).isEqualTo(OrderStatus.PENDING.name());
+    }
+
+    // ---------------------------------------------------------
+    // GET ORDERS (Pagination)
+    // ---------------------------------------------------------
+    @Test
+    void getOrders_shouldReturnPaginatedOrders() throws Exception {
+        // Create 3 orders for the user
+        Order o1 = orderRepository.save(Order.builder()
+                .user(user).totalPrice(10).createdAt(LocalDateTime.now()).build());
+
+        Order o2 = orderRepository.save(Order.builder()
+                .user(user).totalPrice(20).createdAt(LocalDateTime.now()).build());
+
+        Order o3 = orderRepository.save(Order.builder()
+                .user(user).totalPrice(30).createdAt(LocalDateTime.now()).build());
+
+        // Request page=0, size=2
+        mockMvc.perform(get("/orders?page=0&size=2")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageable.pageSize").value(2));
     }
 }

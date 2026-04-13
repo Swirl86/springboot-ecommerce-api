@@ -11,6 +11,10 @@ import com.swirl.ecomengine.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import testsupport.TestDataFactory;
 
 import java.time.LocalDateTime;
@@ -144,25 +148,54 @@ class OrderServiceTest {
         Order o1 = Order.builder().id(1L).user(user).createdAt(LocalDateTime.now()).build();
         Order o2 = Order.builder().id(2L).user(user).createdAt(LocalDateTime.now()).build();
 
-        when(orderRepository.findByUserOrderByCreatedAtDesc(user))
-                .thenReturn(List.of(o1, o2));
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Order> page = new PageImpl<>(List.of(o1, o2), pageable, 2);
 
-        var result = orderService.getOrderHistory(user);
+        when(orderRepository.findByUser(user, pageable))
+                .thenReturn(page);
 
-        assertThat(result).hasSize(2);
+        Page<Order> result = orderService.getOrderHistory(user, pageable);
+
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getTotalElements()).isEqualTo(2);
     }
 
     // ---------------------------------------------------------
     // GET ORDER HISTORY (empty)
     // ---------------------------------------------------------
     @Test
-    void getOrderHistory_returnsEmptyList_whenNoOrdersExist() {
-        when(orderRepository.findByUserOrderByCreatedAtDesc(user))
-                .thenReturn(List.of());
+    void getOrderHistory_returnsEmptyPage_whenNoOrdersExist() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Order> emptyPage = Page.empty(pageable);
 
-        var result = orderService.getOrderHistory(user);
+        when(orderRepository.findByUser(user, pageable))
+                .thenReturn(emptyPage);
 
-        assertThat(result).isEmpty();
+        Page<Order> result = orderService.getOrderHistory(user, pageable);
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(0);
+    }
+
+    // ---------------------------------------------------------
+    // GET ORDER HISTORY (verifies pageable is forwarded correctly)
+    // ---------------------------------------------------------
+    @Test
+    void getOrderHistory_passesCorrectPageableToRepository() {
+        Pageable pageable = PageRequest.of(2, 10); // page=2, size=10
+
+        Page<Order> emptyPage = Page.empty(pageable);
+
+        when(orderRepository.findByUser(user, pageable))
+                .thenReturn(emptyPage);
+
+        Page<Order> result = orderService.getOrderHistory(user, pageable);
+
+        // Verify repository was called with EXACT pageable
+        verify(orderRepository).findByUser(user, pageable);
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(0);
     }
 
     // ---------------------------------------------------------

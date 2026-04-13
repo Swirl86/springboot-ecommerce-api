@@ -16,16 +16,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import testsupport.SecurityTestConfigMinimal;
+import testsupport.TestDataFactory;
 import testsupport.WebMvcTestConfig;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -47,15 +52,16 @@ class OrderControllerTest {
 
     @BeforeEach
     void setup() throws Exception {
-        mockUser = new User();
+        mockUser = TestDataFactory.user(pwd -> "encoded");
         mockUser.setId(1L);
-        mockUser.setEmail("user@example.com");
 
-        Mockito.when(authenticatedUserArgumentResolver.supportsParameter(any()))
-                .thenReturn(true);
+        Mockito.when(authenticatedUserArgumentResolver.supportsParameter(
+                argThat(param -> param.getParameterType().equals(User.class))
+        )).thenReturn(true);
 
-        Mockito.when(authenticatedUserArgumentResolver.resolveArgument(any(), any(), any(), any()))
-                .thenReturn(mockUser);
+        Mockito.when(authenticatedUserArgumentResolver.resolveArgument(
+                any(), any(), any(), any()
+        )).thenReturn(mockUser);
     }
 
     // ---------------------------------------------------------
@@ -105,7 +111,7 @@ class OrderControllerTest {
     // GET ALL ORDERS (GET /orders)
     // ---------------------------------------------------------
     @Test
-    void getOrders_shouldReturnListOfOrders() throws Exception {
+    void getOrders_shouldReturnPaginatedOrders() throws Exception {
         Order order = Order.builder()
                 .id(200L)
                 .user(mockUser)
@@ -124,13 +130,21 @@ class OrderControllerTest {
                 List.of()
         );
 
-        Mockito.when(orderService.getOrderHistory(mockUser)).thenReturn(List.of(order));
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Order> page = new PageImpl<>(List.of(order), pageable, 1);
+
+        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
+                .thenReturn(page);
+
         Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
 
         mockMvc.perform(get("/orders"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(200L))
-                .andExpect(jsonPath("$[0].totalPrice").value(150.00));
+                .andExpect(jsonPath("$.content[0].id").value(200L))
+                .andExpect(jsonPath("$.content[0].totalPrice").value(150.00))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0));
     }
 
     // ---------------------------------------------------------
@@ -180,5 +194,85 @@ class OrderControllerTest {
 
         mockMvc.perform(get("/orders/5"))
                 .andExpect(status().isForbidden());
+    }
+
+    // ---------------------------------------------------------
+    // GET ALL ORDERS (GET /orders?page=2&size=5)
+    // Pagination: custom page + size
+    // ---------------------------------------------------------
+    @Test
+    void getOrders_shouldRespectPageAndSizeParameters() throws Exception {
+        Order order = Order.builder()
+                .id(201L)
+                .user(mockUser)
+                .status(OrderStatus.COMPLETED)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .items(List.of())
+                .totalPrice(99.99)
+                .build();
+
+        OrderResponse response = new OrderResponse(
+                201L,
+                99.99,
+                OrderStatus.COMPLETED,
+                order.getCreatedAt(),
+                List.of()
+        );
+
+        Pageable pageable = PageRequest.of(2, 5); // page=2, size=5
+        Page<Order> page = new PageImpl<>(List.of(order), pageable, 30);
+
+        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
+                .thenReturn(page);
+
+        Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
+
+        mockMvc.perform(get("/orders?page=2&size=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(201L))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(2))
+                .andExpect(jsonPath("$.pageable.pageSize").value(5))
+                .andExpect(jsonPath("$.totalElements").value(30))
+                .andExpect(jsonPath("$.totalPages").value(6));
+    }
+
+    // ---------------------------------------------------------
+    // GET ALL ORDERS (GET /orders)
+    // Pagination: empty result
+    // ---------------------------------------------------------
+    @Test
+    void getOrders_shouldReturnEmptyPage_whenNoOrdersExist() throws Exception {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Order> emptyPage = Page.empty(pageable);
+
+        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        mockMvc.perform(get("/orders"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageable.pageSize").value(20));
+    }
+
+    // ---------------------------------------------------------
+    // GET ALL ORDERS (GET /orders)
+    // Pagination: default pageable values
+    // ---------------------------------------------------------
+    @Test
+    void getOrders_shouldUseDefaultPaginationWhenNoParamsProvided() throws Exception {
+        Pageable defaultPageable = PageRequest.of(0, 20);
+        Page<Order> emptyPage = Page.empty(defaultPageable);
+
+        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
+                .thenReturn(emptyPage);
+
+        mockMvc.perform(get("/orders"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageable.pageSize").value(20));
     }
 }
