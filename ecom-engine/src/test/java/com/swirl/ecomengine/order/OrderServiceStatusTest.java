@@ -12,6 +12,7 @@ import testsupport.TestDataFactory;
 
 import java.util.Optional;
 
+import static com.swirl.ecomengine.order.OrderStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -45,17 +46,68 @@ class OrderServiceStatusTest {
 
         Order order = TestDataFactory.order(owner);
         order.setId(10L);
-        order.setStatus(OrderStatus.PENDING);
+        order.setStatus(PENDING);
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
 
         // Act
-        Order result = service.updateStatus(10L, OrderStatus.PROCESSING, admin);
+        Order result = service.updateStatus(10L, PROCESSING, admin);
 
         // Assert
-        assertThat(result.getStatus()).isEqualTo(OrderStatus.PROCESSING);
-        verify(historyService).logStatusChange(order, OrderStatus.PENDING, OrderStatus.PROCESSING, admin);
+        assertThat(result.getStatus()).isEqualTo(PROCESSING);
+        verify(historyService).logStatusChange(order, PENDING, PROCESSING, admin);
+    }
+
+    // ---------------------------------------------------------
+    // VALID TRANSITION: PROCESSING → SHIPPED
+    // ---------------------------------------------------------
+    @Test
+    void updateStatus_shouldAllowProcessingToShipped() {
+        // Arrange
+        User admin = TestDataFactory.admin(pwd -> "encoded");
+        admin.setId(1L);
+
+        User owner = TestDataFactory.user(pwd -> "encoded");
+        owner.setId(2L);
+
+        Order order = TestDataFactory.order(owner);
+        order.setId(10L);
+        order.setStatus(PROCESSING);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        // Act
+        Order result = service.updateStatus(10L, SHIPPED, admin);
+
+        // Assert
+        assertThat(result.getStatus()).isEqualTo(SHIPPED);
+        verify(historyService).logStatusChange(order, PROCESSING, SHIPPED, admin);
+    }
+
+    // ---------------------------------------------------------
+    // INVALID TRANSITION: PROCESSING → COMPLETED (must go via SHIPPED)
+    // ---------------------------------------------------------
+    @Test
+    void updateStatus_shouldRejectProcessingToCompleted() {
+        // Arrange
+        User admin = TestDataFactory.admin(pwd -> "encoded");
+        admin.setId(1L);
+
+        User owner = TestDataFactory.user(pwd -> "encoded");
+        owner.setId(2L);
+
+        Order order = TestDataFactory.order(owner);
+        order.setId(10L);
+        order.setStatus(PROCESSING);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+
+        // Act + Assert
+        assertThatThrownBy(() -> service.updateStatus(10L, COMPLETED, admin))
+                .isInstanceOf(OrderBadRequestException.class)
+                .hasMessageContaining("Invalid status transition");
     }
 
     // ---------------------------------------------------------
@@ -72,12 +124,12 @@ class OrderServiceStatusTest {
 
         Order order = TestDataFactory.order(owner);
         order.setId(10L);
-        order.setStatus(OrderStatus.COMPLETED);
+        order.setStatus(COMPLETED);
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
         // Act + Assert
-        assertThatThrownBy(() -> service.updateStatus(10L, OrderStatus.PROCESSING, admin))
+        assertThatThrownBy(() -> service.updateStatus(10L, PROCESSING, admin))
                 .isInstanceOf(OrderBadRequestException.class)
                 .hasMessageContaining("Invalid status transition");
     }
@@ -91,7 +143,7 @@ class OrderServiceStatusTest {
 
         when(orderRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.updateStatus(99L, OrderStatus.PROCESSING, admin))
+        assertThatThrownBy(() -> service.updateStatus(99L, PROCESSING, admin))
                 .isInstanceOf(OrderNotFoundException.class);
     }
 }

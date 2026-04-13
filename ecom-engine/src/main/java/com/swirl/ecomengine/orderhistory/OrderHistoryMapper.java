@@ -7,12 +7,16 @@ import org.springframework.stereotype.Component;
 public class OrderHistoryMapper {
 
     public OrderHistoryResponse toResponse(OrderHistoryEntry entry) {
+        String changedByEmail = entry.getChangedBy() != null
+                ? entry.getChangedBy().getEmail()
+                : "system";
+
         return new OrderHistoryResponse(
                 entry.getId(),
                 entry.getFromStatus(),
                 entry.getToStatus(),
                 entry.getChangedAt(),
-                entry.getChangedBy().getEmail()
+                changedByEmail
         );
     }
 }

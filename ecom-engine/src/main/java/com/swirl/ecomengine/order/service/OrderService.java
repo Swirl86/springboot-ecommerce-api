@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.swirl.ecomengine.order.OrderStatus.*;
+
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -49,7 +51,7 @@ public class OrderService {
 
         Order order = Order.builder()
                 .user(user)
-                .status(OrderStatus.PENDING)
+                .status(PENDING)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -114,16 +116,30 @@ public class OrderService {
     /**
      * Validates allowed order status transitions.
      * <pre>
-     * PENDING     → PROCESSING, CANCELLED
-     * PROCESSING  → COMPLETED, CANCELLED
-     * COMPLETED   → (no transitions)
-     * CANCELLED   → (no transitions)
+     * Checkout → Delivery flow:
+     * PENDING        → PROCESSING, CANCELLED
+     * PROCESSING     → SHIPPED, CANCELLED
+     * SHIPPED        → COMPLETED
+     * <pre>
+     * TODO Future Return/refund flow:
+     * COMPLETED      → RETURN_REQUESTED
+     * RETURN_REQUESTED → RETURNED
+     * RETURNED       → REFUNDED
+     * <pre>
+     * Terminal states:
+     * CANCELLED, REFUNDED → (no transitions)
      */
     private boolean isValidTransition(OrderStatus from, OrderStatus to) {
         return switch (from) {
-            case PENDING -> (to == OrderStatus.PROCESSING || to == OrderStatus.CANCELLED);
-            case PROCESSING -> (to == OrderStatus.COMPLETED || to == OrderStatus.CANCELLED);
-            default -> false;
+            case PENDING -> (to == PROCESSING || to == CANCELLED);
+            case PROCESSING -> (to == SHIPPED || to == CANCELLED);
+            case SHIPPED -> to == COMPLETED;
+
+            // Future return/refund flow:
+            // case COMPLETED -> to == RETURN_REQUESTED;
+            // case RETURN_REQUESTED -> to == RETURNED;
+            // case RETURNED -> to == REFUNDED;
+            default -> false; // CANCELLED, REFUNDED
         };
     }
 
@@ -142,7 +158,7 @@ public class OrderService {
     public List<Order> getActiveOrders(User user) {
         return orderRepository.findByUserAndStatusIn(
                 user,
-                List.of(OrderStatus.PENDING, OrderStatus.PROCESSING)
+                List.of(PENDING, PROCESSING)
         );
     }
 
