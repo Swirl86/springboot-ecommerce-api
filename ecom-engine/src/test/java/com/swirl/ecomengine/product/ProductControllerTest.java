@@ -6,11 +6,16 @@ import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,17 +42,24 @@ class ProductControllerTest {
     @MockBean private ProductService productService;
     @MockBean private AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
 
+    private ProductResponse response1;
+    private ProductResponse response2;
+    private ProductRequest request;
+
+    @BeforeEach
+    void setup() {
+        request = new ProductRequest("Laptop", 999.99, "Powerful laptop", 10L);
+        response1 = new ProductResponse(1L, "Laptop", 999.99, "Powerful", 10L, "Electronics");
+        response2 = new ProductResponse(2L, "Phone", 499.99, "Smartphone", 10L, "Electronics");
+    }
+
     // ============================================================
     // GET /products/{id}
     // ============================================================
 
     @Test
     void getProduct_shouldReturn200_whenProductExists() throws Exception {
-        ProductResponse response = new ProductResponse(
-                1L, "Laptop", 999.99, "Powerful laptop", 10L, "Electronics"
-        );
-
-        when(productService.getProductById(1L)).thenReturn(response);
+        when(productService.getProductById(1L)).thenReturn(response1);
 
         mvc.perform(get("/products/1"))
                 .andExpect(status().isOk())
@@ -74,19 +86,61 @@ class ProductControllerTest {
     // ============================================================
 
     @Test
-    void getAllProducts_shouldReturn200_withList() throws Exception {
-        List<ProductResponse> products = List.of(
-                new ProductResponse(1L, "Laptop", 999.99, "Powerful", 10L, "Electronics"),
-                new ProductResponse(2L, "Phone", 499.99, "Smartphone", 10L, "Electronics")
-        );
+    void getAllProducts_shouldReturn200_withPaginatedList() throws Exception {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<ProductResponse> page = new PageImpl<>(List.of(response1, response2), pageable, 2);
 
-        when(productService.getAllProducts()).thenReturn(products);
+        when(productService.getAllProducts(any(Pageable.class))).thenReturn(page);
 
         mvc.perform(get("/products"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].name").value("Laptop"))
-                .andExpect(jsonPath("$[1].name").value("Phone"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].name").value("Laptop"))
+                .andExpect(jsonPath("$.content[1].name").value("Phone"))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0));
+    }
+
+    // ============================================================
+    // GET /products?page=2&size=5
+    // Pagination: custom page + size
+    // ============================================================
+    @Test
+    void getAllProducts_shouldRespectPageAndSizeParameters() throws Exception {
+        Pageable pageable = PageRequest.of(2, 5);
+        Page<ProductResponse> page = new PageImpl<>(List.of(response1), pageable, 11);
+
+        when(productService.getAllProducts(any(Pageable.class))).thenReturn(page);
+
+        mvc.perform(get("/products?page=2&size=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Laptop"))
+                .andExpect(jsonPath("$.totalElements").value(11))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(2))
+                .andExpect(jsonPath("$.pageable.pageSize").value(5));
+    }
+
+    // ============================================================
+    // GET /products
+    // Pagination: empty result
+    // ============================================================
+    @Test
+    void getAllProducts_shouldReturnEmptyPage_whenNoProductsExist() throws Exception {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<ProductResponse> emptyPage = Page.empty(pageable);
+
+        when(productService.getAllProducts(any(Pageable.class))).thenReturn(emptyPage);
+
+        mvc.perform(get("/products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageable.pageSize").value(20));
     }
 
     // ============================================================
@@ -95,15 +149,7 @@ class ProductControllerTest {
 
     @Test
     void createProduct_shouldReturn201_whenValidRequest() throws Exception {
-        ProductRequest request = new ProductRequest(
-                "Laptop", 999.99, "Powerful laptop", 10L
-        );
-
-        ProductResponse response = new ProductResponse(
-                1L, "Laptop", 999.99, "Powerful laptop", 10L, "Electronics"
-        );
-
-        when(productService.createProduct(any())).thenReturn(response);
+        when(productService.createProduct(any())).thenReturn(response1);
 
         mvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -136,10 +182,7 @@ class ProductControllerTest {
 
     @Test
     void updateProduct_shouldReturn200_whenUpdated() throws Exception {
-        ProductRequest request = new ProductRequest("Laptop", 999.99, "desc", 10L);
-        ProductResponse response = new ProductResponse(1L, "Laptop", 999.99, "desc", 10L, "Electronics");
-
-        when(productService.updateProduct(eq(1L), any())).thenReturn(response);
+        when(productService.updateProduct(eq(1L), any())).thenReturn(response1);
 
         mvc.perform(put("/products/1")
                         .contentType(MediaType.APPLICATION_JSON)

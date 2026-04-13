@@ -11,30 +11,41 @@ class ProductMapperTest {
 
     private final ProductMapper mapper = new ProductMapper();
 
+    // ---------------------------------------------------------
+    // MAP FULL PRODUCT
+    // ---------------------------------------------------------
     @Test
     void toResponse_shouldMapAllFields() {
-        // ---------------------------------------------------------
-        // Arrange
-        // ---------------------------------------------------------
         Category category = TestDataFactory.defaultCategory();
         category.setId(10L);
 
         Product product = TestDataFactory.defaultProduct(category);
         product.setId(1L);
 
-        // ---------------------------------------------------------
-        // Act
-        // ---------------------------------------------------------
         ProductResponse dto = mapper.toResponse(product);
 
-        // ---------------------------------------------------------
-        // Assert
-        // ---------------------------------------------------------
         assertThat(dto.id()).isEqualTo(1L);
-        assertThat(dto.name()).isEqualTo("Laptop");
-        assertThat(dto.price()).isEqualTo(999.99);
-        assertThat(dto.description()).isEqualTo("Powerful laptop");
+        assertThat(dto.name()).isEqualTo(product.getName());
+        assertThat(dto.price()).isEqualTo(product.getPrice());
+        assertThat(dto.description()).isEqualTo(product.getDescription());
         assertThat(dto.categoryId()).isEqualTo(10L);
-        assertThat(dto.categoryName()).isEqualTo("Electronics");
+        assertThat(dto.categoryName()).isEqualTo(category.getName());
+    }
+
+    // ---------------------------------------------------------
+    // MAP PRODUCT WITH NULL DESCRIPTION
+    // ---------------------------------------------------------
+    @Test
+    void toResponse_shouldHandleNullDescription() {
+        Category category = TestDataFactory.defaultCategory();
+        category.setId(10L);
+
+        Product product = TestDataFactory.product("NoDesc", 100, null, category);
+        product.setId(2L);
+
+        ProductResponse dto = mapper.toResponse(product);
+
+        assertThat(dto.id()).isEqualTo(2L);
+        assertThat(dto.description()).isNull();
     }
 }

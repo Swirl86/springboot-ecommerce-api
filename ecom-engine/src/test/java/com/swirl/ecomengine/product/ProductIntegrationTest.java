@@ -36,19 +36,20 @@ class ProductIntegrationTest extends IntegrationTestBase {
     private String userToken;
     private Long categoryId;
 
+    private ProductRequest request;
+
     @BeforeEach
     void setup() {
-        // Create ADMIN
         User admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
         adminToken = jwtService.generateToken(admin);
 
-        // Create USER
         User user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
 
-        // Create category
         Category category = categoryRepository.save(TestDataFactory.defaultCategory());
         categoryId = category.getId();
+
+        request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
     }
 
     // ============================================================
@@ -57,8 +58,6 @@ class ProductIntegrationTest extends IntegrationTestBase {
 
     @Test
     void adminCanCreateProduct() throws Exception {
-        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
-
         mvc.perform(post("/products")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -69,8 +68,6 @@ class ProductIntegrationTest extends IntegrationTestBase {
 
     @Test
     void userForbiddenToCreateProduct() throws Exception {
-        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
-
         mvc.perform(post("/products")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -80,8 +77,6 @@ class ProductIntegrationTest extends IntegrationTestBase {
 
     @Test
     void unauthenticatedCannotCreateProduct() throws Exception {
-        ProductRequest request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
-
         mvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(request)))
@@ -109,6 +104,47 @@ class ProductIntegrationTest extends IntegrationTestBase {
         mvc.perform(get("/products/999")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound());
+    }
+
+    // ============================================================
+    // GET /products (paginated)
+    // ============================================================
+    @Test
+    void getAllProducts_shouldReturnPaginatedProducts() throws Exception {
+        // create 3 products
+        productRepository.save(TestDataFactory.product("P1", 10, "d1", getCategory()));
+        productRepository.save(TestDataFactory.product("P2", 20, "d2", getCategory()));
+        productRepository.save(TestDataFactory.product("P3", 30, "d3", getCategory()));
+
+        mvc.perform(get("/products")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageable.pageSize").value(20));
+    }
+
+    // ============================================================
+    // GET /products?page=2&size=5
+    // Pagination: custom page + size
+    // ============================================================
+    @Test
+    void getAllProducts_shouldRespectPageAndSizeParameters() throws Exception {
+        // create 12 products
+        for (int i = 1; i <= 12; i++) {
+            productRepository.save(TestDataFactory.product("P" + i, i * 10, "desc", getCategory()));
+        }
+
+        mvc.perform(get("/products?page=2&size=5")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2)) // page 2 contains items 11–12
+                .andExpect(jsonPath("$.totalElements").value(12))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(2))
+                .andExpect(jsonPath("$.pageable.pageSize").value(5));
     }
 
     // ============================================================
