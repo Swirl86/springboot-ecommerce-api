@@ -10,12 +10,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Products", description = "Operations related to product management")
 @RestController
@@ -32,13 +31,19 @@ public class ProductController {
     // ---------------------------------------------------------
     // GET ALL
     // ---------------------------------------------------------
-    @Operation(summary = "Get all products", description = "Returns all products with category information.")
+    @Operation(
+            summary = "Get all products",
+            description = "Returns a paginated list of products with category information."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Products retrieved successfully")
     })
     @GetMapping
-    public List<ProductResponse> getAllProducts() {
-        return productService.getAllProducts();
+    public Page<ProductResponse> getAllProducts(
+            @PageableDefault(size = 20)
+            Pageable pageable
+    ) {
+        return productService.getAllProducts(pageable);
     }
 
     // ---------------------------------------------------------

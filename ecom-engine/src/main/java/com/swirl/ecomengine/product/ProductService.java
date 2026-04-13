@@ -10,8 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class ProductService {
 
@@ -38,10 +36,9 @@ public class ProductService {
     // ---------------------------------------------------------
     // GET ALL
     // ---------------------------------------------------------
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll().stream()
-                .map(mapper::toResponse)
-                .toList();
+    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+        return productRepository.findAll(pageable)
+                .map(mapper::toResponse);
     }
 
     // ---------------------------------------------------------
