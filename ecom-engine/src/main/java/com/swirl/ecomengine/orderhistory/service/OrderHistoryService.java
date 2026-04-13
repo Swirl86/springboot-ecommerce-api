@@ -6,10 +6,11 @@ import com.swirl.ecomengine.orderhistory.OrderHistoryEntry;
 import com.swirl.ecomengine.orderhistory.OrderHistoryRepository;
 import com.swirl.ecomengine.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class OrderHistoryService {
         historyRepository.save(entry);
     }
 
-    public List<OrderHistoryEntry> getHistory(Long orderId) {
-        return historyRepository.findByOrderIdOrderByChangedAtAsc(orderId);
+    public Page<OrderHistoryEntry> getHistory(Long orderId, Pageable pageable) {
+        return historyRepository.findByOrderId(orderId, pageable);
     }
 }

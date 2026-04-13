@@ -1,9 +1,10 @@
 package com.swirl.ecomengine.orderhistory;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 
 public interface OrderHistoryRepository extends JpaRepository<OrderHistoryEntry, Long> {
-    List<OrderHistoryEntry> findByOrderIdOrderByChangedAtAsc(Long orderId);
+    Page<OrderHistoryEntry> findByOrderId(Long orderId, Pageable pageable);
 }
