@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -31,13 +34,16 @@ public class CategoryController {
     // ---------------------------------------------------------
     // GET ALL
     // ---------------------------------------------------------
-    @Operation(summary = "Get all categories", description = "Returns all categories.")
+    @GetMapping
+    @Operation(
+            summary = "Get all categories",
+            description = "Returns a paginated list of categories."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Categories retrieved successfully")
     })
-    @GetMapping
-    public List<CategoryResponse> getAll() {
-        return service.getAll();
+    public Page<CategoryResponse> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        return service.getAll(pageable);
     }
 
     // ---------------------------------------------------------

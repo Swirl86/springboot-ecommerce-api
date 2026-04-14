@@ -8,6 +8,8 @@ import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
 import com.swirl.ecomengine.common.exception.BadRequestException;
 import com.swirl.ecomengine.common.exception.ConflictException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -55,10 +57,9 @@ public class CategoryService {
     // ---------------------------------------------------------
     // GET ALL
     // ---------------------------------------------------------
-    public List<CategoryResponse> getAll() {
-        return repo.findAll().stream()
-                .map(mapper::toResponse)
-                .toList();
+    public Page<CategoryResponse> getAll(Pageable pageable) {
+        return repo.findAll(pageable)
+                .map(mapper::toResponse);
     }
 
     // ---------------------------------------------------------
