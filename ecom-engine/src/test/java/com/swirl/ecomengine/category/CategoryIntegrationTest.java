@@ -43,6 +43,7 @@ class CategoryIntegrationTest extends IntegrationTestBase {
 
     private String adminToken;
     private String userToken;
+    private CategoryRequest request;
 
     @BeforeEach
     void setup() {
@@ -54,9 +55,11 @@ class CategoryIntegrationTest extends IntegrationTestBase {
         User user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
 
-        // Mocka JWT-filter lookup
+        // Mock JWT lookup
         when(mockUserRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
         when(mockUserRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        request = new CategoryRequest("Electronics");
     }
 
     // ============================================================
@@ -77,8 +80,6 @@ class CategoryIntegrationTest extends IntegrationTestBase {
 
     @Test
     void userForbiddenToCreateCategory() throws Exception {
-        CategoryRequest request = new CategoryRequest("Electronics");
-
         mvc.perform(post("/categories")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,8 +89,6 @@ class CategoryIntegrationTest extends IntegrationTestBase {
 
     @Test
     void unauthenticatedCannotCreateCategory() throws Exception {
-        CategoryRequest request = new CategoryRequest("Electronics");
-
         mvc.perform(post("/categories")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(request)))
@@ -108,25 +107,52 @@ class CategoryIntegrationTest extends IntegrationTestBase {
     }
 
     // ============================================================
-    // GET /categories
+    // GET /categories (paginated)
     // ============================================================
 
     @Test
-    void userCanGetCategories() throws Exception {
+    void userCanGetCategories_paginated() throws Exception {
         categoryRepository.save(TestDataFactory.category("Electronics"));
+        categoryRepository.save(TestDataFactory.category("Accessories"));
 
         mvc.perform(get("/categories")
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Electronics"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[*].name").value(
+                        org.hamcrest.Matchers.containsInAnyOrder("Electronics", "Accessories")
+                ))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0));
     }
 
     @Test
-    void getAllCategories_shouldReturnEmptyList_whenNoneExist() throws Exception {
+    void getAllCategories_shouldReturnEmptyPage_whenNoneExist() throws Exception {
         mvc.perform(get("/categories")
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(0));
+    }
+
+    @Test
+    void getAllCategories_shouldRespectPageAndSizeParameters() throws Exception {
+        // Create 11 categories
+        for (int i = 1; i <= 11; i++) {
+            categoryRepository.save(TestDataFactory.category("C" + i));
+        }
+
+        mvc.perform(get("/categories?page=2&size=5")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1)) // page 2 contains only item 11
+                .andExpect(jsonPath("$.totalElements").value(11))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.pageable.pageNumber").value(2))
+                .andExpect(jsonPath("$.pageable.pageSize").value(5));
     }
 
     // ============================================================

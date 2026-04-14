@@ -8,6 +8,7 @@ import com.swirl.ecomengine.common.exception.BadRequestException;
 import com.swirl.ecomengine.common.exception.ConflictException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -102,26 +103,47 @@ class CategoryServiceTest {
     }
 
     // ---------------------------------------------------------
-    // GET ALL
+    // GET ALL (PAGINATED)
     // ---------------------------------------------------------
 
     @Test
-    void getAll_shouldReturnMappedList() {
+    void getAll_shouldReturnPaginatedResponse() {
         Category c1 = category("Electronics");
         c1.setId(1L);
 
         Category c2 = category("Books");
         c2.setId(2L);
 
-        when(repo.findAll()).thenReturn(List.of(c1, c2));
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Category> page = new PageImpl<>(List.of(c1, c2), pageable, 2);
+
+        when(repo.findAll(pageable)).thenReturn(page);
         when(mapper.toResponse(c1)).thenReturn(new CategoryResponse(1L, "Electronics"));
         when(mapper.toResponse(c2)).thenReturn(new CategoryResponse(2L, "Books"));
 
-        List<CategoryResponse> result = service.getAll();
+        Page<CategoryResponse> result = service.getAll(pageable);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).name()).isEqualTo("Electronics");
-        assertThat(result.get(1).name()).isEqualTo("Books");
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent().get(0).name()).isEqualTo("Electronics");
+        assertThat(result.getContent().get(1).name()).isEqualTo("Books");
+
+        verify(repo).findAll(pageable);
+    }
+
+    @Test
+    void getAll_shouldReturnEmptyPage_whenNoCategoriesExist() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Category> emptyPage = Page.empty(pageable);
+
+        when(repo.findAll(pageable)).thenReturn(emptyPage);
+
+        Page<CategoryResponse> result = service.getAll(pageable);
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(0);
+
+        verify(repo).findAll(pageable);
     }
 
     // ---------------------------------------------------------
