@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.order;
 
+import com.swirl.ecomengine.order.exception.OrderBadRequestException;
 import com.swirl.ecomengine.order.item.OrderItem;
 import com.swirl.ecomengine.user.User;
 import jakarta.persistence.*;
@@ -47,5 +48,13 @@ public class Order {
 
     @Builder.Default
     private boolean deleted = false;
+
+    public void updateStatus(OrderStatus newStatus) {
+        if (!this.status.canTransitionTo(newStatus)) {
+            throw new OrderBadRequestException("Invalid status transition");
+        }
+        this.status = newStatus;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 

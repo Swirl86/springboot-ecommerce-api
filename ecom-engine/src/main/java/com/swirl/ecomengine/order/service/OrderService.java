@@ -24,7 +24,8 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.swirl.ecomengine.order.OrderStatus.*;
+import static com.swirl.ecomengine.order.OrderStatus.PENDING;
+import static com.swirl.ecomengine.order.OrderStatus.PROCESSING;
 
 @Service
 @RequiredArgsConstructor
@@ -100,54 +101,13 @@ public class OrderService {
             throw new OrderAccessDeniedException();
         }
 
-        if (!isValidTransition(order.getStatus(), newStatus)) {
-            throw new OrderBadRequestException(
-                    "Invalid status transition: " + order.getStatus() + " → " + newStatus
-            );
-        }
-
-        // Capture old status BEFORE updating
         OrderStatus oldStatus = order.getStatus();
-
-        // Update order
-        order.setStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
+        order.updateStatus(newStatus);
         Order saved = orderRepository.save(order);
 
-        // Log history entry
         historyService.logStatusChange(order, oldStatus, newStatus, adminUser);
 
         return saved;
-    }
-
-    /**
-     * Validates allowed order status transitions.
-     * <pre>
-     * Checkout → Delivery flow:
-     * PENDING        → PROCESSING, CANCELLED
-     * PROCESSING     → SHIPPED, CANCELLED
-     * SHIPPED        → COMPLETED
-     * <pre>
-     * TODO Future Return/refund flow:
-     * COMPLETED      → RETURN_REQUESTED
-     * RETURN_REQUESTED → RETURNED
-     * RETURNED       → REFUNDED
-     * <pre>
-     * Terminal states:
-     * CANCELLED, REFUNDED → (no transitions)
-     */
-    private boolean isValidTransition(OrderStatus from, OrderStatus to) {
-        return switch (from) {
-            case PENDING -> (to == PROCESSING || to == CANCELLED);
-            case PROCESSING -> (to == SHIPPED || to == CANCELLED);
-            case SHIPPED -> to == COMPLETED;
-
-            // Future return/refund flow:
-            // case COMPLETED -> to == RETURN_REQUESTED;
-            // case RETURN_REQUESTED -> to == RETURNED;
-            // case RETURNED -> to == REFUNDED;
-            default -> false; // CANCELLED, REFUNDED
-        };
     }
 
     // ---------------------------------------------------------

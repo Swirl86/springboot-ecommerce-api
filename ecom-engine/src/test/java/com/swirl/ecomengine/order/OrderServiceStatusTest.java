@@ -37,7 +37,6 @@ class OrderServiceStatusTest {
     // ---------------------------------------------------------
     @Test
     void updateStatus_shouldAllowPendingToProcessing() {
-        // Arrange
         User admin = TestDataFactory.admin(pwd -> "encoded");
         admin.setId(1L);
 
@@ -51,10 +50,8 @@ class OrderServiceStatusTest {
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
 
-        // Act
         Order result = service.updateStatus(10L, PROCESSING, admin);
 
-        // Assert
         assertThat(result.getStatus()).isEqualTo(PROCESSING);
         verify(historyService).logStatusChange(order, PENDING, PROCESSING, admin);
     }
@@ -64,7 +61,6 @@ class OrderServiceStatusTest {
     // ---------------------------------------------------------
     @Test
     void updateStatus_shouldAllowProcessingToShipped() {
-        // Arrange
         User admin = TestDataFactory.admin(pwd -> "encoded");
         admin.setId(1L);
 
@@ -78,20 +74,17 @@ class OrderServiceStatusTest {
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
 
-        // Act
         Order result = service.updateStatus(10L, SHIPPED, admin);
 
-        // Assert
         assertThat(result.getStatus()).isEqualTo(SHIPPED);
         verify(historyService).logStatusChange(order, PROCESSING, SHIPPED, admin);
     }
 
     // ---------------------------------------------------------
-    // INVALID TRANSITION: PROCESSING → COMPLETED (must go via SHIPPED)
+    // INVALID TRANSITION: PROCESSING → COMPLETED
     // ---------------------------------------------------------
     @Test
     void updateStatus_shouldRejectProcessingToCompleted() {
-        // Arrange
         User admin = TestDataFactory.admin(pwd -> "encoded");
         admin.setId(1L);
 
@@ -104,7 +97,6 @@ class OrderServiceStatusTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        // Act + Assert
         assertThatThrownBy(() -> service.updateStatus(10L, COMPLETED, admin))
                 .isInstanceOf(OrderBadRequestException.class)
                 .hasMessageContaining("Invalid status transition");
@@ -115,7 +107,6 @@ class OrderServiceStatusTest {
     // ---------------------------------------------------------
     @Test
     void updateStatus_shouldRejectInvalidTransition() {
-        // Arrange
         User admin = TestDataFactory.admin(pwd -> "encoded");
         admin.setId(1L);
 
@@ -128,7 +119,6 @@ class OrderServiceStatusTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        // Act + Assert
         assertThatThrownBy(() -> service.updateStatus(10L, PROCESSING, admin))
                 .isInstanceOf(OrderBadRequestException.class)
                 .hasMessageContaining("Invalid status transition");
