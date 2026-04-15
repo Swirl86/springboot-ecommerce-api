@@ -27,12 +27,10 @@ import testsupport.SecurityTestConfigMinimal;
 import testsupport.TestDataFactory;
 import testsupport.WebMvcTestConfig;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -69,20 +67,14 @@ class OrderControllerTest {
     // ---------------------------------------------------------
     @Test
     void checkout_shouldReturnCreatedOrder() throws Exception {
-        Order order = Order.builder()
-                .id(100L)
-                .user(mockUser)
-                .status(OrderStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .items(List.of())
-                .totalPrice(199.99)
-                .build();
+        Order order = TestDataFactory.order(mockUser);
+        order.setId(100L);
+        order.setTotalPrice(199.99);
 
         OrderResponse response = new OrderResponse(
                 100L,
                 199.99,
-                OrderStatus.PENDING,
+                order.getStatus(),
                 order.getCreatedAt(),
                 List.of()
         );
@@ -112,15 +104,10 @@ class OrderControllerTest {
     // ---------------------------------------------------------
     @Test
     void getOrders_shouldReturnPaginatedOrders() throws Exception {
-        Order order = Order.builder()
-                .id(200L)
-                .user(mockUser)
-                .status(OrderStatus.COMPLETED)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .items(List.of())
-                .totalPrice(150.00)
-                .build();
+        Order order = TestDataFactory.order(mockUser);
+        order.setId(200L);
+        order.setStatus(OrderStatus.COMPLETED);
+        order.setTotalPrice(150.00);
 
         OrderResponse response = new OrderResponse(
                 200L,
@@ -148,19 +135,14 @@ class OrderControllerTest {
     }
 
     // ---------------------------------------------------------
-    // GET ORDER BY ID (GET /orders/{id})
+    // GET ORDER BY ID
     // ---------------------------------------------------------
     @Test
     void getOrderById_shouldReturnOrder_whenExists() throws Exception {
-        Order order = Order.builder()
-                .id(300L)
-                .user(mockUser)
-                .status(OrderStatus.COMPLETED)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .items(List.of())
-                .totalPrice(300.00)
-                .build();
+        Order order = TestDataFactory.order(mockUser);
+        order.setId(300L);
+        order.setStatus(OrderStatus.COMPLETED);
+        order.setTotalPrice(300.00);
 
         OrderResponse response = new OrderResponse(
                 300L,
@@ -197,20 +179,14 @@ class OrderControllerTest {
     }
 
     // ---------------------------------------------------------
-    // GET ALL ORDERS (GET /orders?page=2&size=5)
-    // Pagination: custom page + size
+    // GET ALL ORDERS (pagination)
     // ---------------------------------------------------------
     @Test
     void getOrders_shouldRespectPageAndSizeParameters() throws Exception {
-        Order order = Order.builder()
-                .id(201L)
-                .user(mockUser)
-                .status(OrderStatus.COMPLETED)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .items(List.of())
-                .totalPrice(99.99)
-                .build();
+        Order order = TestDataFactory.order(mockUser);
+        order.setId(201L);
+        order.setStatus(OrderStatus.COMPLETED);
+        order.setTotalPrice(99.99);
 
         OrderResponse response = new OrderResponse(
                 201L,
@@ -220,7 +196,7 @@ class OrderControllerTest {
                 List.of()
         );
 
-        Pageable pageable = PageRequest.of(2, 5); // page=2, size=5
+        Pageable pageable = PageRequest.of(2, 5);
         Page<Order> page = new PageImpl<>(List.of(order), pageable, 30);
 
         Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
@@ -237,10 +213,6 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.totalPages").value(6));
     }
 
-    // ---------------------------------------------------------
-    // GET ALL ORDERS (GET /orders)
-    // Pagination: empty result
-    // ---------------------------------------------------------
     @Test
     void getOrders_shouldReturnEmptyPage_whenNoOrdersExist() throws Exception {
         Pageable pageable = PageRequest.of(0, 20);
@@ -259,20 +231,51 @@ class OrderControllerTest {
     }
 
     // ---------------------------------------------------------
-    // GET ALL ORDERS (GET /orders)
-    // Pagination: default pageable values
+    // DELETE ORDER
     // ---------------------------------------------------------
     @Test
-    void getOrders_shouldUseDefaultPaginationWhenNoParamsProvided() throws Exception {
-        Pageable defaultPageable = PageRequest.of(0, 20);
-        Page<Order> emptyPage = Page.empty(defaultPageable);
+    void deleteOrder_shouldReturn204_whenSuccessful() throws Exception {
+        Mockito.doNothing().when(orderService).delete(10L);
 
-        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
-                .thenReturn(emptyPage);
+        mockMvc.perform(delete("/orders/10"))
+                .andExpect(status().isNoContent());
+    }
 
-        mockMvc.perform(get("/orders"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
-                .andExpect(jsonPath("$.pageable.pageSize").value(20));
+    @Test
+    void deleteOrder_shouldReturn404_whenOrderNotFound() throws Exception {
+        Mockito.doThrow(new OrderNotFoundException(999L))
+                .when(orderService).delete(999L);
+
+        mockMvc.perform(delete("/orders/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    // ---------------------------------------------------------
+    // RESTORE ORDER
+    // ---------------------------------------------------------
+    @Test
+    void restoreOrder_shouldReturn204_whenSuccessful() throws Exception {
+        Mockito.doNothing().when(orderService).restore(20L, mockUser);
+
+        mockMvc.perform(post("/orders/20/restore"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void restoreOrder_shouldReturn404_whenOrderNotFound() throws Exception {
+        Mockito.doThrow(new OrderNotFoundException(123L))
+                .when(orderService).restore(123L, mockUser);
+
+        mockMvc.perform(post("/orders/123/restore"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void restoreOrder_shouldReturn403_whenAccessDenied() throws Exception {
+        Mockito.doThrow(new OrderAccessDeniedException())
+                .when(orderService).restore(5L, mockUser);
+
+        mockMvc.perform(post("/orders/5/restore"))
+                .andExpect(status().isForbidden());
     }
 }

@@ -189,6 +189,7 @@ public class TestDataFactory {
                 .status(OrderStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
+                .deleted(false)
                 .build();
     }
 
