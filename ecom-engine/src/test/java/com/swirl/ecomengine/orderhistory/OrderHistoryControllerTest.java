@@ -89,7 +89,8 @@ class OrderHistoryControllerTest {
                 OrderStatus.PENDING,
                 OrderStatus.PROCESSING,
                 LocalDateTime.now(),
-                "admin@example.com"
+                "admin@example.com",
+                null
         );
 
         Mockito.when(mapper.toResponse(entry)).thenReturn(dto);
@@ -150,7 +151,8 @@ class OrderHistoryControllerTest {
                         OrderStatus.PENDING,
                         OrderStatus.PROCESSING,
                         LocalDateTime.now(),
-                        "admin@example.com"
+                        "admin@example.com",
+                        null
                 ));
 
         mockMvc.perform(get("/orders/10/history"))
@@ -207,7 +209,8 @@ class OrderHistoryControllerTest {
                         OrderStatus.PENDING,
                         OrderStatus.PROCESSING,
                         LocalDateTime.now(),
-                        "admin@example.com"
+                        "admin@example.com",
+                        null
                 ));
 
         mockMvc.perform(get("/orders/10/history?page=0&size=2"))

@@ -16,7 +16,8 @@ public class OrderHistoryMapper {
                 entry.getFromStatus(),
                 entry.getToStatus(),
                 entry.getChangedAt(),
-                changedByEmail
+                changedByEmail,
+                entry.getReason()
         );
     }
 }

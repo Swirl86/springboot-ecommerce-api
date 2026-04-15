@@ -9,6 +9,7 @@ public record OrderHistoryResponse(
         OrderStatus fromStatus,
         OrderStatus toStatus,
         LocalDateTime changedAt,
-        String changedByEmail
+        String changedByEmail,
+        String reason
 ) {}
 
