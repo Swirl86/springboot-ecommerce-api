@@ -141,4 +141,60 @@ public class OrderController {
         Order updated = service.updateStatus(id, request.status(), user);
         return ResponseEntity.ok(mapper.toResponse(updated));
     }
+
+    // ---------------------------------------------------------
+    // DELETE ORDER
+    // ---------------------------------------------------------
+    @Operation(summary = "Delete an order", description = "Soft-deletes an order. Admin only.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Order deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Order not found")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrder(
+            @AuthenticatedUser User admin,
+            @PathVariable Long id
+    ) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ---------------------------------------------------------
+    // GET /orders/deleted — list soft-deleted orders (ADMIN)
+    // ---------------------------------------------------------
+    @Operation(
+            summary = "List deleted orders",
+            description = "Returns all soft-deleted orders. Admin only."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Deleted orders returned successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied — admin only")
+    })
+    @GetMapping("/deleted")
+    public ResponseEntity<List<Order>> getDeletedOrders(
+            @AuthenticatedUser User admin
+    ) {
+        return ResponseEntity.ok(service.getDeletedOrders(admin));
+    }
+
+    // ---------------------------------------------------------
+    // RESTORE ORDER (ADMIN ONLY)
+    // ---------------------------------------------------------
+    @Operation(
+            summary = "Restore a soft-deleted order",
+            description = "Restores an order that was previously soft-deleted. Admin only."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Order restored successfully"),
+            @ApiResponse(responseCode = "404", description = "Order not found"),
+            @ApiResponse(responseCode = "403", description = "Access denied — admin only")
+    })
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Void> restoreOrder(
+            @AuthenticatedUser User admin,
+            @PathVariable Long id
+    ) {
+        service.restore(id, admin);
+        return ResponseEntity.noContent().build();
+    }
 }

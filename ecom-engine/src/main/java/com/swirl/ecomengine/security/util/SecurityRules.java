@@ -37,6 +37,7 @@ public final class SecurityRules {
     public static final String[] ADMIN_WRITE = {
             "/products/**",
             "/categories/**",
-            "/orders/**"
+            "/orders/**",
+            "/orders/*/restore"
     };
 }

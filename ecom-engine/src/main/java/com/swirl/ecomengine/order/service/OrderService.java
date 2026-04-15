@@ -12,6 +12,8 @@ import com.swirl.ecomengine.order.exception.OrderNotFoundException;
 import com.swirl.ecomengine.order.item.OrderItem;
 import com.swirl.ecomengine.orderhistory.service.OrderHistoryService;
 import com.swirl.ecomengine.user.User;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,9 @@ public class OrderService {
     private final CartService cartService;
     private final OrderRepository orderRepository;
     private final OrderHistoryService historyService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     // ---------------------------------------------------------
     // CREATE ORDER (Checkout)
@@ -177,6 +182,56 @@ public class OrderService {
         }
 
         return order;
+    }
+
+    // ---------------------------------------------------------
+    // DELETE ORDER (Soft-delete)
+    // ---------------------------------------------------------
+    @Transactional
+    public void delete(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException(id));
+
+        orderRepository.delete(order); // triggers @SQLDelete → sets deleted = true
+    }
+
+    // ---------------------------------------------------------
+    // GET ALL DELETED ORDERS (Admin only)
+    // ---------------------------------------------------------
+    @Transactional(readOnly = true)
+    public List<Order> getDeletedOrders(User adminUser) {
+
+        if (!adminUser.isAdmin()) {
+            throw new OrderAccessDeniedException();
+        }
+
+        return orderRepository.findDeleted();
+    }
+
+    // ---------------------------------------------------------
+    // RESTORE ORDER (Admin only)
+    // ---------------------------------------------------------
+    @Transactional
+    public void restore(Long id, User adminUser) {
+
+        if (!adminUser.isAdmin()) {
+            throw new OrderAccessDeniedException();
+        }
+
+        Order order = (Order) entityManager
+                .createNativeQuery("SELECT * FROM orders WHERE id = :id", Order.class)
+                .setParameter("id", id)
+                .getSingleResult();
+
+        if (order == null) {
+            throw new OrderNotFoundException(id);
+        }
+
+        // Restore the order
+        order.setDeleted(false);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        orderRepository.save(order);
     }
 
     // ---------------------------------------------------------
