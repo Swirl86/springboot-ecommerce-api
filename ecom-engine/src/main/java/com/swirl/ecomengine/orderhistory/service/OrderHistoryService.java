@@ -18,13 +18,14 @@ public class OrderHistoryService {
 
     private final OrderHistoryRepository historyRepository;
 
-    public void logStatusChange(Order order, OrderStatus from, OrderStatus to, User changedBy) {
+    public void logStatusChange(Order order, OrderStatus from, OrderStatus to, User changedBy, String reason) {
         OrderHistoryEntry entry = OrderHistoryEntry.builder()
                 .order(order)
                 .fromStatus(from)
                 .toStatus(to)
                 .changedAt(LocalDateTime.now())
                 .changedBy(changedBy)
+                .reason(reason)
                 .build();
 
         historyRepository.save(entry);

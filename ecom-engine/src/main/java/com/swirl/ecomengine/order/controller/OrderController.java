@@ -138,7 +138,7 @@ public class OrderController {
             @PathVariable Long id,
             @RequestBody UpdateOrderStatusRequest request
     ) {
-        Order updated = service.updateStatus(id, request.status(), user);
+        Order updated = service.updateStatus(id, request.status(), user, request.reason());
         return ResponseEntity.ok(mapper.toResponse(updated));
     }
 

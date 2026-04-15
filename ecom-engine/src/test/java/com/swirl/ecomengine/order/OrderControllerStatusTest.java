@@ -17,10 +17,11 @@ import testsupport.TestDataFactory;
 
 import java.util.Optional;
 
-import static com.swirl.ecomengine.order.OrderStatus.*;
+import static com.swirl.ecomengine.order.OrderStatus.PROCESSING;
+import static com.swirl.ecomengine.order.OrderStatus.SHIPPED;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class OrderControllerStatusTest extends IntegrationTestBase {
 
@@ -65,7 +66,7 @@ class OrderControllerStatusTest extends IntegrationTestBase {
     void adminCanUpdateStatus() throws Exception {
         Order order = orderRepository.save(TestDataFactory.order(user));
 
-        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING);
+        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING, null);
 
         mvc.perform(patch("/orders/" + order.getId() + "/status")
                         .header("Authorization", "Bearer " + adminToken)
@@ -83,7 +84,7 @@ class OrderControllerStatusTest extends IntegrationTestBase {
         order.setStatus(OrderStatus.PROCESSING);
         orderRepository.save(order);
 
-        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(SHIPPED);
+        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(SHIPPED, null);
 
         mvc.perform(patch("/orders/" + order.getId() + "/status")
                         .header("Authorization", "Bearer " + adminToken)
@@ -99,7 +100,7 @@ class OrderControllerStatusTest extends IntegrationTestBase {
     void userCannotUpdateStatus() throws Exception {
         Order order = orderRepository.save(TestDataFactory.order(user));
 
-        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING);
+        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING, null);
 
         mvc.perform(patch("/orders/" + order.getId() + "/status")
                         .header("Authorization", "Bearer " + userToken)
@@ -116,7 +117,7 @@ class OrderControllerStatusTest extends IntegrationTestBase {
         User otherUser = userRepository.save(TestDataFactory.user(passwordEncoder, "other@example.com"));
         Order order = orderRepository.save(TestDataFactory.order(otherUser));
 
-        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING);
+        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING, null);
 
         mvc.perform(patch("/orders/" + order.getId() + "/status")
                         .header("Authorization", "Bearer " + userToken)
@@ -130,7 +131,7 @@ class OrderControllerStatusTest extends IntegrationTestBase {
     // ---------------------------------------------------------
     @Test
     void updateStatusReturns404WhenOrderNotFound() throws Exception {
-        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING);
+        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(PROCESSING, null);
 
         mvc.perform(patch("/orders/999/status")
                         .header("Authorization", "Bearer " + adminToken)
@@ -146,7 +147,7 @@ class OrderControllerStatusTest extends IntegrationTestBase {
     void updateStatusReturns400WhenStatusIsNull() throws Exception {
         Order order = orderRepository.save(TestDataFactory.order(user));
 
-        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(null);
+        UpdateOrderStatusRequest req = new UpdateOrderStatusRequest(null, null);
 
         mvc.perform(patch("/orders/" + order.getId() + "/status")
                         .header("Authorization", "Bearer " + adminToken)

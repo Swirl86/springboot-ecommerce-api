@@ -39,4 +39,16 @@ public class OrderHistoryEntry {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "changed_by", nullable = false)
     private User changedBy;
+
+    /**
+     * Optional human-readable explanation for why the status changed.
+     * <pre>
+     * Examples:
+     *  - "Admin approved shipment"
+     *  - "User requested cancellation"
+     *  - "System auto-completed after delivery scan"
+     *  </pre>
+     */
+    @Column(length = 255)
+    private String reason;
 }

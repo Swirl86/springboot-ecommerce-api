@@ -92,7 +92,7 @@ public class OrderService {
     // UPDATE ORDER STATUS (ADMIN ONLY)
     // ---------------------------------------------------------
     @Transactional
-    public Order updateStatus(Long id, OrderStatus newStatus, User adminUser) {
+    public Order updateStatus(Long id, OrderStatus newStatus, User adminUser, String reason) {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
@@ -105,7 +105,7 @@ public class OrderService {
         order.updateStatus(newStatus);
         Order saved = orderRepository.save(order);
 
-        historyService.logStatusChange(order, oldStatus, newStatus, adminUser);
+        historyService.logStatusChange(order, oldStatus, newStatus, adminUser, reason);
 
         return saved;
     }

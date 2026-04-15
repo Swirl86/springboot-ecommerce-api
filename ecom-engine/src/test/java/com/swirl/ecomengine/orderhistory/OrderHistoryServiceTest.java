@@ -39,7 +39,7 @@ class OrderHistoryServiceTest {
         admin.setId(1L);
         admin.setEmail("admin@test.com");
 
-        service.logStatusChange(order, OrderStatus.PENDING, OrderStatus.PROCESSING, admin);
+        service.logStatusChange(order, OrderStatus.PENDING, OrderStatus.PROCESSING, admin, null);
 
         verify(repository).save(any(OrderHistoryEntry.class));
     }

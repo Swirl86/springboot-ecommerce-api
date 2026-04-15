@@ -50,10 +50,10 @@ class OrderServiceStatusTest {
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
 
-        Order result = service.updateStatus(10L, PROCESSING, admin);
+        Order result = service.updateStatus(10L, PROCESSING, admin, null);
 
         assertThat(result.getStatus()).isEqualTo(PROCESSING);
-        verify(historyService).logStatusChange(order, PENDING, PROCESSING, admin);
+        verify(historyService).logStatusChange(order, PENDING, PROCESSING, admin, null);
     }
 
     // ---------------------------------------------------------
@@ -74,10 +74,10 @@ class OrderServiceStatusTest {
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
 
-        Order result = service.updateStatus(10L, SHIPPED, admin);
+        Order result = service.updateStatus(10L, SHIPPED, admin, null);
 
         assertThat(result.getStatus()).isEqualTo(SHIPPED);
-        verify(historyService).logStatusChange(order, PROCESSING, SHIPPED, admin);
+        verify(historyService).logStatusChange(order, PROCESSING, SHIPPED, admin, null);
     }
 
     // ---------------------------------------------------------
@@ -97,7 +97,7 @@ class OrderServiceStatusTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> service.updateStatus(10L, COMPLETED, admin))
+        assertThatThrownBy(() -> service.updateStatus(10L, COMPLETED, admin, null))
                 .isInstanceOf(OrderBadRequestException.class)
                 .hasMessageContaining("Invalid status transition");
     }
@@ -119,7 +119,7 @@ class OrderServiceStatusTest {
 
         when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> service.updateStatus(10L, PROCESSING, admin))
+        assertThatThrownBy(() -> service.updateStatus(10L, PROCESSING, admin, null))
                 .isInstanceOf(OrderBadRequestException.class)
                 .hasMessageContaining("Invalid status transition");
     }
@@ -133,7 +133,32 @@ class OrderServiceStatusTest {
 
         when(orderRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.updateStatus(99L, PROCESSING, admin))
+        assertThatThrownBy(() -> service.updateStatus(99L, PROCESSING, admin, null))
                 .isInstanceOf(OrderNotFoundException.class);
+    }
+
+    // ---------------------------------------------------------
+    // REASON: PENDING → PROCESSING with reason passed through
+    // ---------------------------------------------------------
+    @Test
+    void updateStatus_shouldPassReasonToHistoryService() {
+        User admin = TestDataFactory.admin(pwd -> "encoded");
+        admin.setId(1L);
+
+        User owner = TestDataFactory.user(pwd -> "encoded");
+        owner.setId(2L);
+
+        Order order = TestDataFactory.order(owner);
+        order.setId(10L);
+        order.setStatus(PENDING);
+
+        when(orderRepository.findById(10L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        String reason = "Admin approved shipment";
+
+        service.updateStatus(10L, PROCESSING, admin, reason);
+
+        verify(historyService).logStatusChange(order, PENDING, PROCESSING, admin, reason);
     }
 }
