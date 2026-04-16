@@ -65,10 +65,10 @@ class OrderHistoryControllerTest {
     }
 
     // ---------------------------------------------------------
-    // USER CAN VIEW OWN HISTORY
+    // USER CAN VIEW OWN HISTORY (TIMELINE)
     // ---------------------------------------------------------
     @Test
-    void getOrderHistory_shouldReturnHistory_whenUserOwnsOrder() throws Exception {
+    void getOrderHistory_shouldReturnTimeline_whenUserOwnsOrder() throws Exception {
         Mockito.when(authenticatedUserArgumentResolver.resolveArgument(any(), any(), any(), any()))
                 .thenReturn(mockUser);
 
@@ -80,9 +80,8 @@ class OrderHistoryControllerTest {
 
         OrderHistoryEntry entry = new OrderHistoryEntry();
 
-        Page<OrderHistoryEntry> page = new PageImpl<>(List.of(entry));
         Mockito.when(historyService.getHistory(eq(10L), any(Pageable.class)))
-                .thenReturn(page);
+                .thenReturn(new PageImpl<>(List.of(entry)));
 
         OrderHistoryResponse dto = new OrderHistoryResponse(
                 10L,
@@ -90,15 +89,17 @@ class OrderHistoryControllerTest {
                 OrderStatus.PROCESSING,
                 LocalDateTime.now(),
                 "admin@example.com",
-                null
+                "Manual override"
         );
 
         Mockito.when(mapper.toResponse(entry)).thenReturn(dto);
 
         mockMvc.perform(get("/orders/10/history"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].fromStatus").value("PENDING"))
-                .andExpect(jsonPath("$.content[0].toStatus").value("PROCESSING"));
+                .andExpect(jsonPath("$.orderId").value(10))
+                .andExpect(jsonPath("$.events[0].fromStatus").value("PENDING"))
+                .andExpect(jsonPath("$.events[0].toStatus").value("PROCESSING"))
+                .andExpect(jsonPath("$.events[0].changedByEmail").value("admin@example.com"));
     }
 
     // ---------------------------------------------------------
@@ -175,10 +176,10 @@ class OrderHistoryControllerTest {
     }
 
     // ---------------------------------------------------------
-    // PAGINATION WORKS
+    // TIMELINE RETURNS EVENTS FROM PAGE CONTENT
     // ---------------------------------------------------------
     @Test
-    void getOrderHistory_shouldReturnPaginatedResult() throws Exception {
+    void getOrderHistory_shouldReturnEventsFromPageContent() throws Exception {
         Mockito.when(authenticatedUserArgumentResolver.resolveArgument(any(), any(), any(), any()))
                 .thenReturn(mockAdmin);
 
@@ -215,10 +216,7 @@ class OrderHistoryControllerTest {
 
         mockMvc.perform(get("/orders/10/history?page=0&size=2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.totalElements").value(10))
-                .andExpect(jsonPath("$.totalPages").value(5))
-                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
-                .andExpect(jsonPath("$.pageable.pageSize").value(2));
+                .andExpect(jsonPath("$.orderId").value(10))
+                .andExpect(jsonPath("$.events.length()").value(2));
     }
 }

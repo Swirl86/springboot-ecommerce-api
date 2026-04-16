@@ -64,9 +64,9 @@ class OrderHistoryIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/orders/" + order.getId() + "/history")
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].fromStatus").value("PENDING"))
-                .andExpect(jsonPath("$.content[0].toStatus").value("PROCESSING"))
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.orderId").value(order.getId()))
+                .andExpect(jsonPath("$.events[0].fromStatus").value("PENDING"))
+                .andExpect(jsonPath("$.events[0].toStatus").value("PROCESSING"));
     }
 
     // ---------------------------------------------------------
@@ -90,14 +90,15 @@ class OrderHistoryIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/orders/" + order.getId() + "/history")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(1));
+                .andExpect(jsonPath("$.orderId").value(order.getId()))
+                .andExpect(jsonPath("$.events.length()").value(1));
     }
 
     // ---------------------------------------------------------
-    // PAGINATION WORKS
+    // TIMELINE RETURNS ALL EVENTS FROM PAGE CONTENT
     // ---------------------------------------------------------
     @Test
-    void pagination_shouldReturnCorrectMetadata() throws Exception {
+    void timeline_shouldReturnAllEventsFromPageContent() throws Exception {
         // Add extra history entries
         for (int i = 0; i < 25; i++) {
             historyRepository.save(OrderHistoryEntry.builder()
@@ -107,16 +108,12 @@ class OrderHistoryIntegrationTest extends IntegrationTestBase {
                     .changedAt(LocalDateTime.now().plusSeconds(i))
                     .changedBy(admin)
                     .build());
-
         }
 
         mockMvc.perform(get("/orders/" + order.getId() + "/history?page=0&size=20")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(20))
-                .andExpect(jsonPath("$.totalElements").value(26))
-                .andExpect(jsonPath("$.totalPages").value(2))
-                .andExpect(jsonPath("$.pageable.pageNumber").value(0))
-                .andExpect(jsonPath("$.pageable.pageSize").value(20));
+                .andExpect(jsonPath("$.orderId").value(order.getId()))
+                .andExpect(jsonPath("$.events.length()").value(20));
     }
 }

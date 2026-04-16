@@ -6,6 +6,7 @@ import com.swirl.ecomengine.order.exception.OrderNotFoundException;
 import com.swirl.ecomengine.orderhistory.OrderHistoryEntry;
 import com.swirl.ecomengine.orderhistory.OrderHistoryMapper;
 import com.swirl.ecomengine.orderhistory.dto.OrderHistoryResponse;
+import com.swirl.ecomengine.orderhistory.dto.OrderTimelineResponse;
 import com.swirl.ecomengine.orderhistory.exception.OrderHistoryAccessDeniedException;
 import com.swirl.ecomengine.orderhistory.service.OrderHistoryService;
 import com.swirl.ecomengine.security.user.AuthenticatedUser;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "Order History", description = "View historical status changes for an order")
 @RestController
@@ -47,11 +50,11 @@ public class OrderHistoryController {
     }
 
     // ---------------------------------------------------------
-    // GET ORDER HISTORY (PAGINATED)
+    // GET ORDER HISTORY (TIMELINE VIEW)
     // ---------------------------------------------------------
     @Operation(
-            summary = "Get order history (paginated)",
-            description = "Returns a paginated and chronological list of all status changes for the specified order. "
+            summary = "Get order history (timeline)",
+            description = "Returns a chronological timeline of all status changes for the specified order. "
                     + "Admins may view any order; users may only view their own."
     )
     @ApiResponses({
@@ -60,7 +63,7 @@ public class OrderHistoryController {
             @ApiResponse(responseCode = "404", description = "Order not found")
     })
     @GetMapping("/{orderId}/history")
-    public ResponseEntity<Page<OrderHistoryResponse>> getOrderHistory(
+    public ResponseEntity<OrderTimelineResponse> getOrderHistory(
             @AuthenticatedUser User user,
             @PathVariable @Positive(message = "Order ID must be positive") Long orderId,
             @PageableDefault(size = 20, sort = "changedAt", direction = Sort.Direction.ASC)
@@ -76,8 +79,12 @@ public class OrderHistoryController {
 
         Page<OrderHistoryEntry> historyPage = historyService.getHistory(orderId, pageable);
 
-        Page<OrderHistoryResponse> responsePage = historyPage.map(mapper::toResponse);
+        List<OrderHistoryResponse> events = historyPage.getContent().stream()
+                .map(mapper::toResponse)
+                .toList();
 
-        return ResponseEntity.ok(responsePage);
+        OrderTimelineResponse response = new OrderTimelineResponse(orderId, events);
+
+        return ResponseEntity.ok(response);
     }
 }
