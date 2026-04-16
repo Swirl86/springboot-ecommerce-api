@@ -48,3 +48,25 @@ jobs:
             - name: Build and run tests
               working-directory: ./ecom-engine
               run: mvn -B verify
+
+            # -----------------------------------------------------
+            # 5. Upload test results (Surefire + Failsafe)
+            # -----------------------------------------------------
+            - name: Upload test results
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-results
+                  path: |
+                      ecom-engine/target/surefire-reports
+                      ecom-engine/target/failsafe-reports
+
+            # -----------------------------------------------------
+            # 6. Upload JaCoCo coverage report
+            # -----------------------------------------------------
+            - name: Upload coverage report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: ecom-engine/target/site/jacoco
