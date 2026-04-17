@@ -5,6 +5,7 @@ import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
 import com.swirl.ecomengine.common.exception.ConflictException;
+import com.swirl.ecomengine.common.exception.EmailAlreadyExistsException;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
@@ -30,7 +31,7 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new ConflictException("Email already in use");
+            throw new EmailAlreadyExistsException();
         }
 
         User user = User.builder()

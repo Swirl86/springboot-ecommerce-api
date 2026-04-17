@@ -5,6 +5,7 @@ import com.swirl.ecomengine.address.AddressRepository;
 import com.swirl.ecomengine.address.dto.AddressResponse;
 import com.swirl.ecomengine.common.exception.BadRequestException;
 import com.swirl.ecomengine.common.exception.ConflictException;
+import com.swirl.ecomengine.common.exception.EmailAlreadyExistsException;
 import com.swirl.ecomengine.order.OrderRepository;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
@@ -107,7 +108,7 @@ public class UserService {
         // EMAIL
         if (hasText(req.email())) {
             if (userRepository.existsByEmail(req.email())) {
-                throw new ConflictException("Email is already in use");
+                throw new EmailAlreadyExistsException();
             }
             user.setEmail(req.email());
         }
