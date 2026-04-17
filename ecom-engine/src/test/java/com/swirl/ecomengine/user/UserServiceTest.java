@@ -1,11 +1,16 @@
 package com.swirl.ecomengine.user;
 
+import com.swirl.ecomengine.address.AddressRepository;
+import com.swirl.ecomengine.order.OrderRepository;
 import com.swirl.ecomengine.user.exception.UserNotFoundException;
 import com.swirl.ecomengine.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import testsupport.TestDataFactory;
 
 import java.util.List;
 
@@ -23,7 +28,12 @@ class UserServiceTest {
     @BeforeEach
     void setup() {
         userRepository.deleteAll();
-        userService = new UserService(userRepository);
+
+        OrderRepository orderRepository = Mockito.mock(OrderRepository.class);
+        AddressRepository addressRepository = Mockito.mock(AddressRepository.class);
+        PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+
+        userService = new UserService(userRepository, orderRepository, addressRepository, passwordEncoder);
     }
 
     // ============================================================
@@ -32,17 +42,11 @@ class UserServiceTest {
 
     @Test
     void getById_shouldReturnUser_whenUserExists() {
-        User saved = userRepository.save(
-                User.builder()
-                        .email("test@example.com")
-                        .password("hashed")
-                        .role(Role.USER)
-                        .build()
-        );
+        User saved = userRepository.save(TestDataFactory.user(pwd -> "encoded"));
 
         User result = userService.getById(saved.getId());
 
-        assertThat(result.getEmail()).isEqualTo("test@example.com");
+        assertThat(result.getEmail()).isEqualTo("user@example.com");
     }
 
     @Test
@@ -57,8 +61,8 @@ class UserServiceTest {
 
     @Test
     void getAll_shouldReturnAllUsers() {
-        userRepository.save(User.builder().email("a@example.com").password("x").role(Role.USER).build());
-        userRepository.save(User.builder().email("b@example.com").password("y").role(Role.USER).build());
+        userRepository.save(TestDataFactory.user(pwd -> "encoded", "a@example.com"));
+        userRepository.save(TestDataFactory.user(pwd -> "encoded", "b@example.com"));
 
         List<User> users = userService.getAll();
 
@@ -71,13 +75,7 @@ class UserServiceTest {
 
     @Test
     void update_shouldPersistUpdatedUser() {
-        User saved = userRepository.save(
-                User.builder()
-                        .email("old@example.com")
-                        .password("hashed")
-                        .role(Role.USER)
-                        .build()
-        );
+        User saved = userRepository.save(TestDataFactory.user(pwd -> "encoded", "old@example.com"));
 
         saved.setEmail("new@example.com");
 

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import testsupport.TestDataFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,11 +27,9 @@ class UserRepositoryTest {
 
     @Test
     void existsByEmail_shouldReturnTrue_whenEmailExists() {
-        userRepository.save(User.builder()
-                .email("exists@example.com")
-                .password("hashed")
-                .role(Role.USER)
-                .build());
+        userRepository.save(
+                TestDataFactory.user(pwd -> "encoded", "exists@example.com")
+        );
 
         assertThat(userRepository.existsByEmail("exists@example.com")).isTrue();
     }
@@ -46,11 +45,9 @@ class UserRepositoryTest {
 
     @Test
     void findByEmail_shouldReturnUser_whenEmailExists() {
-        userRepository.save(User.builder()
-                .email("findme@example.com")
-                .password("hashed")
-                .role(Role.USER)
-                .build());
+        userRepository.save(
+                TestDataFactory.user(pwd -> "encoded", "findme@example.com")
+        );
 
         assertThat(userRepository.findByEmail("findme@example.com"))
                 .isPresent()
@@ -70,18 +67,14 @@ class UserRepositoryTest {
 
     @Test
     void save_shouldThrowException_whenEmailIsDuplicate() {
-        userRepository.save(User.builder()
-                .email("dup@example.com")
-                .password("pass")
-                .role(Role.USER)
-                .build());
+        userRepository.save(
+                TestDataFactory.user(pwd -> "encoded", "dup@example.com")
+        );
 
         assertThatThrownBy(() ->
-                userRepository.save(User.builder()
-                        .email("dup@example.com")
-                        .password("pass")
-                        .role(Role.USER)
-                        .build())
+                userRepository.save(
+                        TestDataFactory.user(pwd -> "encoded", "dup@example.com")
+                )
         ).isInstanceOf(DataIntegrityViolationException.class);
     }
 }

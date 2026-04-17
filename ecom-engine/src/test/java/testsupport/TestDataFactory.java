@@ -1,5 +1,8 @@
 package testsupport;
 
+import com.swirl.ecomengine.address.Address;
+import com.swirl.ecomengine.address.dto.AddressResponse;
+import com.swirl.ecomengine.address.dto.CreateOrUpdateAddressRequest;
 import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
@@ -27,23 +30,14 @@ public class TestDataFactory {
     // AUTH
     // ============================================================
 
-    /**
-     * Creates a default RegisterRequest for auth tests.
-     */
     public static RegisterRequest registerRequest() {
         return new RegisterRequest("test@example.com", "password123");
     }
 
-    /**
-     * Creates a default LoginRequest for auth tests.
-     */
     public static LoginRequest loginRequest() {
         return new LoginRequest("test@example.com", "password123");
     }
 
-    /**
-     * Creates a default AuthResponse used in controller/service tests.
-     */
     public static AuthResponse authResponse() {
         return new AuthResponse(
                 1L,
@@ -62,21 +56,23 @@ public class TestDataFactory {
      * Used in integration tests.
      */
     public static User admin(PasswordEncoder encoder) {
-        return new User(
-                null,
-                "admin@example.com",
-                encoder.encode("password123"),
-                Role.ADMIN
-        );
+        return User.builder()
+                .email("admin@example.com")
+                .password(encoder.encode("password123"))
+                .name("Admin User")
+                .phone("0700000000")
+                .role(Role.ADMIN)
+                .build();
     }
 
     public static User admin(PasswordEncoder encoder, String email) {
-        return new User(
-                null,
-                email,
-                encoder.encode("password123"),
-                Role.ADMIN
-        );
+        return User.builder()
+                .email(email)
+                .password(encoder.encode("password123"))
+                .name("Admin User")
+                .phone("0700000000")
+                .role(Role.ADMIN)
+                .build();
     }
 
     /**
@@ -84,21 +80,23 @@ public class TestDataFactory {
      * Used in integration tests.
      */
     public static User user(PasswordEncoder encoder) {
-        return new User(
-                null,
-                "user@example.com",
-                encoder.encode("password123"),
-                Role.USER
-        );
+        return User.builder()
+                .email("user@example.com")
+                .password(encoder.encode("password123"))
+                .name("Test User")
+                .phone("0701111111")
+                .role(Role.USER)
+                .build();
     }
 
     public static User user(PasswordEncoder encoder, String email) {
-        return new User(
-                null,
-                email,
-                encoder.encode("password123"),
-                Role.USER
-        );
+        return User.builder()
+                .email(email)
+                .password(encoder.encode("password123"))
+                .name("Test User")
+                .phone("0701111111")
+                .role(Role.USER)
+                .build();
     }
 
     /**
@@ -106,12 +104,13 @@ public class TestDataFactory {
      * Useful for service tests without Spring context.
      */
     public static User admin(Function<String, String> encoder) {
-        return new User(
-                null,
-                "admin@example.com",
-                encoder.apply("password123"),
-                Role.ADMIN
-        );
+        return User.builder()
+                .email("admin@example.com")
+                .password(encoder.apply("password123"))
+                .name("Admin User")
+                .phone("0700000000")
+                .role(Role.ADMIN)
+                .build();
     }
 
     /**
@@ -119,11 +118,74 @@ public class TestDataFactory {
      * Used in unit tests (e.g., mapper tests) to avoid Spring context.
      */
     public static User user(Function<String, String> encoder) {
-        return new User(
-                null,
-                "user@example.com",
-                encoder.apply("password123"),
-                Role.USER
+        return User.builder()
+                .email("user@example.com")
+                .password(encoder.apply("password123"))
+                .name("Test User")
+                .phone("0701111111")
+                .role(Role.USER)
+                .build();
+    }
+
+    public static User user(Function<String, String> encoder, String email) {
+        return User.builder()
+                .email(email)
+                .password(encoder.apply("password123"))
+                .name("Test User")
+                .phone("0701111111")
+                .role(Role.USER)
+                .build();
+    }
+
+    // ============================================================
+    // ADDRESS
+    // ============================================================
+
+    public static Address address(User user) {
+        return Address.builder()
+                .street("Main Street 1")
+                .postalCode("12345")
+                .city("Sundsvall")
+                .country("Sweden")
+                .user(user)
+                .build();
+    }
+
+    public static CreateOrUpdateAddressRequest addressRequest() {
+        return new CreateOrUpdateAddressRequest(
+                "Main Street 1",
+                "12345",
+                "Sundsvall",
+                "Sweden"
+        );
+    }
+
+    public static AddressResponse addressResponse() {
+        return new AddressResponse(
+                1L,
+                "Main Street 1",
+                "12345",
+                "Sundsvall",
+                "Sweden"
+        );
+    }
+
+    public static CreateOrUpdateAddressRequest updatedAddressRequest() {
+        return new CreateOrUpdateAddressRequest(
+                "Updated Street",
+                "99999",
+                "Stockholm",
+                "Sweden"
+        );
+    }
+
+    public static AddressResponse updatedAddressResponse() {
+        return new AddressResponse(
+                1L,
+                "Updated Street",
+                "99999",
+                "Stockholm",
+                "Sweden"
         );
     }
 
