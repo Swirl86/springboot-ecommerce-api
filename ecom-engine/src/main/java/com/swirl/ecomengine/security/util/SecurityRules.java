@@ -24,13 +24,18 @@ public final class SecurityRules {
             "/cart/**",
             "/orders",          // list orders
             "/orders/*",         // get order by id
-            "/orders/*/history/**"
+            "/orders/*/history/**",
+            "/users/me",
+            "/users/me/address",
+            "/users/me/full-profile"
     };
 
     // Endpoints accessible to authenticated users (POST, PUT, DELETE)
     public static final String[] USER_WRITE = {
             "/cart/**",
-            "/orders/checkout"
+            "/orders/checkout",
+            "/users/me",
+            "/users/me/address"
     };
 
     // Endpoints restricted to ADMIN role

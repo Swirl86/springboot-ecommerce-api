@@ -9,11 +9,23 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
+    // ---------------------------------------------------------
+    // USER ORDERS
+    // ---------------------------------------------------------
     List<Order> findByUserOrderByCreatedAtDesc(User user);
+
     List<Order> findByUserAndStatusIn(User user, List<OrderStatus> statuses);
+
     Page<Order> findByUser(User user, Pageable pageable);
 
-    @Query(value = "SELECT * FROM orders WHERE deleted = true", nativeQuery = true)
-    List<Order> findDeleted();
-}
+    // ---------------------------------------------------------
+    // PROFILE SUPPORT
+    // ---------------------------------------------------------
+    int countByUserId(Long userId);
 
+    // ---------------------------------------------------------
+    // ARCHIVED ORDERS (soft-delete)
+    // ---------------------------------------------------------
+    @Query(value = "SELECT * FROM orders WHERE deleted = true", nativeQuery = true)
+    List<Order> findArchived();
+}

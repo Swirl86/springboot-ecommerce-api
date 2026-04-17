@@ -60,7 +60,6 @@ public class SecurityConfig {
 
                         // USER
                         .requestMatchers(HttpMethod.GET, SecurityRules.USER_READ).authenticated()
-                        // USER CART
                         .requestMatchers(HttpMethod.POST, SecurityRules.USER_WRITE).authenticated()
                         .requestMatchers(HttpMethod.PUT, SecurityRules.USER_WRITE).authenticated()
                         .requestMatchers(HttpMethod.DELETE, SecurityRules.USER_WRITE).authenticated()

@@ -165,7 +165,7 @@ public class OrderService {
             throw new OrderAccessDeniedException();
         }
 
-        return orderRepository.findDeleted();
+        return orderRepository.findArchived();
     }
 
     // ---------------------------------------------------------
