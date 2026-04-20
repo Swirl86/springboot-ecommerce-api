@@ -1,11 +1,13 @@
 package com.swirl.ecomengine.order.service;
 
+import com.swirl.ecomengine.address.Address;
 import com.swirl.ecomengine.cart.Cart;
 import com.swirl.ecomengine.cart.service.CartService;
 import com.swirl.ecomengine.common.exception.UnauthorizedException;
 import com.swirl.ecomengine.order.Order;
 import com.swirl.ecomengine.order.OrderRepository;
 import com.swirl.ecomengine.order.OrderStatus;
+import com.swirl.ecomengine.order.exception.MissingOrderInformationException;
 import com.swirl.ecomengine.order.exception.OrderAccessDeniedException;
 import com.swirl.ecomengine.order.exception.OrderBadRequestException;
 import com.swirl.ecomengine.order.exception.OrderNotFoundException;
@@ -24,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.swirl.ecomengine.common.StringUtils.hasText;
 import static com.swirl.ecomengine.order.OrderStatus.PENDING;
 import static com.swirl.ecomengine.order.OrderStatus.PROCESSING;
 
@@ -47,6 +50,25 @@ public class OrderService {
             throw new UnauthorizedException("User must be authenticated");
         }
 
+        // ---------------------------------------------------------
+        // USER PROFILE VALIDATION
+        // ---------------------------------------------------------
+        if (!hasText(user.getName())) {
+            throw new MissingOrderInformationException("Name is required to place an order");
+        }
+
+        if (!hasText(user.getPhone())) {
+            throw new MissingOrderInformationException("Phone number is required to place an order");
+        }
+
+        Address address = user.getAddress();
+        if (address == null) {
+            throw new MissingOrderInformationException("Address is required to place an order");
+        }
+
+        // ---------------------------------------------------------
+        // CART VALIDATION
+        // ---------------------------------------------------------
         Cart cart = cartService.getCart(user);
 
         if (cart == null) {
@@ -57,6 +79,9 @@ public class OrderService {
             throw new OrderBadRequestException("Cannot place order with empty cart");
         }
 
+        // ---------------------------------------------------------
+        // CREATE ORDER
+        // ---------------------------------------------------------
         Order order = Order.builder()
                 .user(user)
                 .status(PENDING)

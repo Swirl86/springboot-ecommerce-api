@@ -152,7 +152,6 @@ public class OrderController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(
-            @AuthenticatedUser User admin,
             @PathVariable Long id
     ) {
         service.delete(id);
@@ -171,10 +170,14 @@ public class OrderController {
             @ApiResponse(responseCode = "403", description = "Access denied — admin only")
     })
     @GetMapping("/deleted")
-    public ResponseEntity<List<Order>> getDeletedOrders(
-            @AuthenticatedUser User admin
-    ) {
-        return ResponseEntity.ok(service.getDeletedOrders(admin));
+    public ResponseEntity<List<OrderResponse>> getDeletedOrders(@AuthenticatedUser User admin) {
+        var orders = service.getDeletedOrders(admin);
+
+        return ResponseEntity.ok(
+                orders.stream()
+                        .map(mapper::toResponse)
+                        .toList()
+        );
     }
 
     // ---------------------------------------------------------

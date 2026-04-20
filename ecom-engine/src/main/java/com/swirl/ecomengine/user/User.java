@@ -23,18 +23,20 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    // TODO implement @Column(nullable = false)
-    private String name;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
+    // ---------------------------------------------------------
+    // PROFILE DATA REQUIRED FOR CHECKOUT
+    // OrderService.placeOrder(...) validates name, phone and address.
+    // After registration, the user should update their profile.
+    // ---------------------------------------------------------
+    private String name;
+
     private String phone;
 
-    // ---------------------------------------------------------
-    // ADDRESS (OPTIONAL, USER ROLE ONLY)
-    // ---------------------------------------------------------
+    // USER ROLE ONLY
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Address address;
 
