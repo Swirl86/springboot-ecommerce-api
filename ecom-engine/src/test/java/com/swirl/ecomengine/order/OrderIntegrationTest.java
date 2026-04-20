@@ -1,6 +1,7 @@
 package com.swirl.ecomengine.order;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swirl.ecomengine.address.AddressRepository;
 import com.swirl.ecomengine.cart.Cart;
 import com.swirl.ecomengine.cart.CartRepository;
 import com.swirl.ecomengine.cart.item.CartItem;
@@ -43,6 +44,7 @@ class OrderIntegrationTest extends IntegrationTestBase {
     @Autowired private ProductRepository productRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private AddressRepository addressRepository;
 
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
@@ -55,10 +57,14 @@ class OrderIntegrationTest extends IntegrationTestBase {
 
     @BeforeEach
     void setup() {
+        addressRepository.deleteAll();
+        userRepository.deleteAll();
+
         User admin = userRepository.save(TestDataFactory.admin(passwordEncoder));
         adminToken = jwtService.generateToken(admin);
 
         user = userRepository.save(TestDataFactory.user(passwordEncoder));
+        user.setAddress(addressRepository.save(TestDataFactory.address(user)));
         userToken = jwtService.generateToken(user);
 
         Category category = categoryRepository.save(TestDataFactory.defaultCategory());

@@ -46,12 +46,12 @@ class OrderControllerTest {
     @MockBean private OrderMapper orderMapper;
     @MockBean private AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
 
-    private User mockUser;
+    private User user;
 
     @BeforeEach
     void setup() throws Exception {
-        mockUser = TestDataFactory.user(pwd -> "encoded");
-        mockUser.setId(1L);
+        user = TestDataFactory.user(pwd -> "encoded");
+        user.setId(1L);
 
         Mockito.when(authenticatedUserArgumentResolver.supportsParameter(
                 argThat(param -> param.getParameterType().equals(User.class))
@@ -59,7 +59,7 @@ class OrderControllerTest {
 
         Mockito.when(authenticatedUserArgumentResolver.resolveArgument(
                 any(), any(), any(), any()
-        )).thenReturn(mockUser);
+        )).thenReturn(user);
     }
 
     // ---------------------------------------------------------
@@ -67,7 +67,7 @@ class OrderControllerTest {
     // ---------------------------------------------------------
     @Test
     void checkout_shouldReturnCreatedOrder() throws Exception {
-        Order order = TestDataFactory.order(mockUser);
+        Order order = TestDataFactory.order(user);
         order.setId(100L);
         order.setTotalPrice(199.99);
 
@@ -79,7 +79,7 @@ class OrderControllerTest {
                 List.of()
         );
 
-        Mockito.when(orderService.placeOrder(mockUser)).thenReturn(order);
+        Mockito.when(orderService.placeOrder(user)).thenReturn(order);
         Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
 
         mockMvc.perform(post("/orders/checkout")
@@ -92,7 +92,7 @@ class OrderControllerTest {
 
     @Test
     void checkout_shouldReturn400_whenCartIsEmpty() throws Exception {
-        Mockito.when(orderService.placeOrder(mockUser))
+        Mockito.when(orderService.placeOrder(user))
                 .thenThrow(new OrderBadRequestException("Cannot place order with empty cart"));
 
         mockMvc.perform(post("/orders/checkout"))
@@ -104,7 +104,7 @@ class OrderControllerTest {
     // ---------------------------------------------------------
     @Test
     void getOrders_shouldReturnPaginatedOrders() throws Exception {
-        Order order = TestDataFactory.order(mockUser);
+        Order order = TestDataFactory.order(user);
         order.setId(200L);
         order.setStatus(OrderStatus.COMPLETED);
         order.setTotalPrice(150.00);
@@ -120,7 +120,7 @@ class OrderControllerTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<Order> page = new PageImpl<>(List.of(order), pageable, 1);
 
-        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
+        Mockito.when(orderService.getOrderHistory(eq(user), any(Pageable.class)))
                 .thenReturn(page);
 
         Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
@@ -139,7 +139,7 @@ class OrderControllerTest {
     // ---------------------------------------------------------
     @Test
     void getOrderById_shouldReturnOrder_whenExists() throws Exception {
-        Order order = TestDataFactory.order(mockUser);
+        Order order = TestDataFactory.order(user);
         order.setId(300L);
         order.setStatus(OrderStatus.COMPLETED);
         order.setTotalPrice(300.00);
@@ -152,7 +152,7 @@ class OrderControllerTest {
                 List.of()
         );
 
-        Mockito.when(orderService.getOrderById(mockUser, 300L)).thenReturn(order);
+        Mockito.when(orderService.getOrderById(user, 300L)).thenReturn(order);
         Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
 
         mockMvc.perform(get("/orders/300"))
@@ -162,7 +162,7 @@ class OrderControllerTest {
 
     @Test
     void getOrderById_shouldReturn404_whenNotFound() throws Exception {
-        Mockito.when(orderService.getOrderById(mockUser, 999L))
+        Mockito.when(orderService.getOrderById(user, 999L))
                 .thenThrow(new OrderNotFoundException(999L));
 
         mockMvc.perform(get("/orders/999"))
@@ -171,7 +171,7 @@ class OrderControllerTest {
 
     @Test
     void getOrderById_shouldReturn403_whenAccessDenied() throws Exception {
-        Mockito.when(orderService.getOrderById(mockUser, 5L))
+        Mockito.when(orderService.getOrderById(user, 5L))
                 .thenThrow(new OrderAccessDeniedException());
 
         mockMvc.perform(get("/orders/5"))
@@ -183,7 +183,7 @@ class OrderControllerTest {
     // ---------------------------------------------------------
     @Test
     void getOrders_shouldRespectPageAndSizeParameters() throws Exception {
-        Order order = TestDataFactory.order(mockUser);
+        Order order = TestDataFactory.order(user);
         order.setId(201L);
         order.setStatus(OrderStatus.COMPLETED);
         order.setTotalPrice(99.99);
@@ -199,7 +199,7 @@ class OrderControllerTest {
         Pageable pageable = PageRequest.of(2, 5);
         Page<Order> page = new PageImpl<>(List.of(order), pageable, 30);
 
-        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
+        Mockito.when(orderService.getOrderHistory(eq(user), any(Pageable.class)))
                 .thenReturn(page);
 
         Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
@@ -218,7 +218,7 @@ class OrderControllerTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<Order> emptyPage = Page.empty(pageable);
 
-        Mockito.when(orderService.getOrderHistory(eq(mockUser), any(Pageable.class)))
+        Mockito.when(orderService.getOrderHistory(eq(user), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         mockMvc.perform(get("/orders"))
@@ -255,7 +255,7 @@ class OrderControllerTest {
     // ---------------------------------------------------------
     @Test
     void restoreOrder_shouldReturn204_whenSuccessful() throws Exception {
-        Mockito.doNothing().when(orderService).restore(20L, mockUser);
+        Mockito.doNothing().when(orderService).restore(20L, user);
 
         mockMvc.perform(post("/orders/20/restore"))
                 .andExpect(status().isNoContent());
@@ -264,7 +264,7 @@ class OrderControllerTest {
     @Test
     void restoreOrder_shouldReturn404_whenOrderNotFound() throws Exception {
         Mockito.doThrow(new OrderNotFoundException(123L))
-                .when(orderService).restore(123L, mockUser);
+                .when(orderService).restore(123L, user);
 
         mockMvc.perform(post("/orders/123/restore"))
                 .andExpect(status().isNotFound());
@@ -273,7 +273,7 @@ class OrderControllerTest {
     @Test
     void restoreOrder_shouldReturn403_whenAccessDenied() throws Exception {
         Mockito.doThrow(new OrderAccessDeniedException())
-                .when(orderService).restore(5L, mockUser);
+                .when(orderService).restore(5L, user);
 
         mockMvc.perform(post("/orders/5/restore"))
                 .andExpect(status().isForbidden());

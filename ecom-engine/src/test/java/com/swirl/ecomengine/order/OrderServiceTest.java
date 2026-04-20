@@ -2,6 +2,7 @@ package com.swirl.ecomengine.order;
 
 import com.swirl.ecomengine.cart.Cart;
 import com.swirl.ecomengine.cart.service.CartService;
+import com.swirl.ecomengine.order.exception.MissingOrderInformationException;
 import com.swirl.ecomengine.order.exception.OrderAccessDeniedException;
 import com.swirl.ecomengine.order.exception.OrderBadRequestException;
 import com.swirl.ecomengine.order.exception.OrderNotFoundException;
@@ -54,8 +55,9 @@ class OrderServiceTest {
 
         orderService = new OrderService(cartService, orderRepository, historyService);
 
-        user = new User();
+        user = TestDataFactory.user(pwd -> "encoded");
         user.setId(1L);
+        user.setAddress(TestDataFactory.address(user));
 
         cart = TestDataFactory.cart(user);
 
@@ -104,6 +106,36 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.placeOrder(user))
                 .isInstanceOf(OrderBadRequestException.class)
                 .hasMessageContaining("empty cart");
+    }
+
+    @Test
+    void placeOrder_throwsWhenNameMissing() {
+        user.setName(null);
+        when(cartService.getCart(user)).thenReturn(cart);
+
+        assertThatThrownBy(() -> orderService.placeOrder(user))
+                .isInstanceOf(MissingOrderInformationException.class)
+                .hasMessageContaining("Name");
+    }
+
+    @Test
+    void placeOrder_throwsWhenPhoneMissing() {
+        user.setPhone(null);
+        when(cartService.getCart(user)).thenReturn(cart);
+
+        assertThatThrownBy(() -> orderService.placeOrder(user))
+                .isInstanceOf(MissingOrderInformationException.class)
+                .hasMessageContaining("Phone");
+    }
+
+    @Test
+    void placeOrder_throwsWhenAddressMissing() {
+        user.setAddress(null);
+        when(cartService.getCart(user)).thenReturn(cart);
+
+        assertThatThrownBy(() -> orderService.placeOrder(user))
+                .isInstanceOf(MissingOrderInformationException.class)
+                .hasMessageContaining("Address");
     }
 
     @Test
