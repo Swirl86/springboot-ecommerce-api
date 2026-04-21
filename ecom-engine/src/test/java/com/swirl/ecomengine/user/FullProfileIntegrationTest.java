@@ -1,6 +1,5 @@
 package com.swirl.ecomengine.user;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.address.AddressRepository;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +12,8 @@ import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class FullProfileIntegrationTest extends IntegrationTestBase {
 
