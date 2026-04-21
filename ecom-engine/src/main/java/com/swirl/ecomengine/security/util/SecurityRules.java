@@ -43,6 +43,7 @@ public final class SecurityRules {
             "/products/**",
             "/categories/**",
             "/orders/**",
-            "/orders/*/restore"
+            "/orders/*/restore",
+            "/admin/**"
     };
 }

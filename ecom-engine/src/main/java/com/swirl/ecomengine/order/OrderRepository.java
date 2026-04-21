@@ -22,6 +22,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // PROFILE SUPPORT
     // ---------------------------------------------------------
     int countByUserId(Long userId);
+    int countByUser(User user);
+
+    // ---------------------------------------------------------
+    // ADMIN SUPPORT
+    // ---------------------------------------------------------
+    List<Order> findByStatus(OrderStatus status);
 
     // ---------------------------------------------------------
     // ARCHIVED ORDERS (soft-delete)
