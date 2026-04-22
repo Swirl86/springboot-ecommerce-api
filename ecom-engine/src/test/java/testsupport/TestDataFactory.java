@@ -13,11 +13,14 @@ import com.swirl.ecomengine.order.Order;
 import com.swirl.ecomengine.order.OrderStatus;
 import com.swirl.ecomengine.order.item.OrderItem;
 import com.swirl.ecomengine.product.Product;
+import com.swirl.ecomengine.product.dto.ProductRequest;
+import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -206,23 +209,61 @@ public class TestDataFactory {
     // ============================================================
 
     public static Product product(String name, double price, String desc, Category category) {
-        return new Product(
-                null,
-                name,
-                price,
-                desc,
-                category
-        );
+        Product p = new Product();
+        p.setId(null);
+        p.setName(name);
+        p.setPrice(price);
+        p.setDescription(desc);
+        p.setCategory(category);
+        p.setImageUrls(List.of("https://example.com/test-image.jpg"));
+        return p;
     }
 
     public static Product defaultProduct(Category category) {
-        return new Product(
-                null,
+        Product p = new Product();
+        p.setId(null);
+        p.setName("Laptop");
+        p.setPrice(999.99);
+        p.setDescription("Powerful laptop");
+        p.setCategory(category);
+        p.setImageUrls(List.of("https://example.com/laptop.jpg"));
+        return p;
+    }
+
+    public static ProductRequest productRequest(Long categoryId) {
+        return new ProductRequest(
                 "Laptop",
                 999.99,
                 "Powerful laptop",
-                category
+                categoryId,
+                List.of("https://example.com/laptop.jpg")
         );
+    }
+
+    public static ProductRequest updateProductRequest(Long categoryId) {
+        return new ProductRequest(
+                "Updated",
+                123.45,
+                "New desc",
+                categoryId,
+                List.of("img1.jpg", "img2.jpg")
+        );
+    }
+
+    public static ProductResponse productResponse(Long id, Long categoryId, String categoryName) {
+        return new ProductResponse(
+                id,
+                "Laptop",
+                999.99,
+                "Powerful laptop",
+                categoryId,
+                categoryName,
+                List.of("https://example.com/laptop.jpg")
+        );
+    }
+
+    public static ProductResponse defaultProductResponse(Long id) {
+        return productResponse(id, 10L, "Electronics");
     }
 
     // ============================================================

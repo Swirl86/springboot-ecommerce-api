@@ -5,7 +5,9 @@ import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
 import com.swirl.ecomengine.category.service.CategoryService;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
+import com.swirl.ecomengine.product.exception.ProductCategoryMismatchException;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
+import com.swirl.ecomengine.product.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -48,7 +50,7 @@ class ProductServiceTest {
         phone = TestDataFactory.product("Phone", 499.99, "Smartphone", category);
         phone.setId(2L);
 
-        request = new ProductRequest("Laptop", 999.99, "Powerful laptop", category.getId());
+        request = new ProductRequest("Laptop", 999.99, "Powerful laptop", category.getId(), List.of());
     }
 
     // ------------------------------------------------------------
@@ -150,6 +152,56 @@ class ProductServiceTest {
 
         assertThatThrownBy(() -> productService.createProduct(request))
                 .isInstanceOf(CategoryNotFoundException.class);
+    }
+
+    // ------------------------------------------------------------
+    // createProduct — maps image URLs correctly
+    // ------------------------------------------------------------
+    @Test
+    void createProduct_shouldMapImageUrls() {
+        when(categoryService.getById(category.getId())).thenReturn(category);
+        when(productRepository.save(any(Product.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        request = TestDataFactory.productRequest(category.getId());
+
+        ProductResponse response = productService.createProduct(request);
+
+        assertThat(response.imageUrls()).containsExactly("https://example.com/laptop.jpg");
+    }
+
+    // ------------------------------------------------------------
+    // updateProduct — updates all fields including image URLs
+    // ------------------------------------------------------------
+    @Test
+    void updateProduct_updatesFieldsCorrectly() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(laptop));
+        when(categoryService.getById(category.getId())).thenReturn(category);
+        when(productRepository.save(any(Product.class))).thenReturn(laptop);
+
+        ProductRequest update = TestDataFactory.updateProductRequest(category.getId());
+
+        ProductResponse response = productService.updateProduct(1L, update);
+
+        assertThat(response.name()).isEqualTo("Updated");
+        assertThat(response.price()).isEqualTo(123.45);
+        assertThat(response.description()).isEqualTo("New desc");
+        assertThat(response.imageUrls()).containsExactly("img1.jpg", "img2.jpg");
+    }
+
+    // ------------------------------------------------------------
+    // updateProduct — throws when category mismatch occurs
+    // ------------------------------------------------------------
+    @Test
+    void updateProduct_throwsCategoryMismatch() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(laptop));
+        when(categoryService.getById(99L))
+                .thenThrow(new ProductCategoryMismatchException(99L));
+
+        ProductRequest update = TestDataFactory.updateProductRequest(category.getId());
+
+        assertThatThrownBy(() -> productService.updateProduct(1L, update))
+                .isInstanceOf(ProductCategoryMismatchException.class);
     }
 
     // ------------------------------------------------------------

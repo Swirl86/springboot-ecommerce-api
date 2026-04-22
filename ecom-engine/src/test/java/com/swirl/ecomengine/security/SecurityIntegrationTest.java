@@ -104,12 +104,7 @@ class SecurityIntegrationTest extends IntegrationTestBase {
 
     @Test
     void createProduct_shouldReturn403_forUserRole() throws Exception {
-        ProductRequest request = new ProductRequest(
-                "Test",
-                1.0,
-                "x",
-                categoryId
-        );
+        ProductRequest request = TestDataFactory.productRequest(categoryId);
 
         mvc.perform(post("/products")
                         .header("Authorization", "Bearer " + userToken)
@@ -120,12 +115,7 @@ class SecurityIntegrationTest extends IntegrationTestBase {
 
     @Test
     void createProduct_shouldReturn201_forAdminRole() throws Exception {
-        ProductRequest request = new ProductRequest(
-                "Laptop",
-                999.99,
-                "Powerful laptop",
-                categoryId
-        );
+        ProductRequest request = TestDataFactory.productRequest(categoryId);
 
         mvc.perform(post("/products")
                         .header("Authorization", "Bearer " + adminToken)
@@ -136,12 +126,7 @@ class SecurityIntegrationTest extends IntegrationTestBase {
 
     @Test
     void createProduct_shouldReturn401_whenUnauthenticated() throws Exception {
-        ProductRequest request = new ProductRequest(
-                "Laptop",
-                999.99,
-                "Powerful laptop",
-                categoryId
-        );
+        ProductRequest request = TestDataFactory.productRequest(categoryId);
 
         mvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)

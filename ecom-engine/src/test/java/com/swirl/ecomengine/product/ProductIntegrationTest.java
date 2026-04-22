@@ -16,6 +16,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
+import java.util.List;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,7 +51,7 @@ class ProductIntegrationTest extends IntegrationTestBase {
         Category category = categoryRepository.save(TestDataFactory.defaultCategory());
         categoryId = category.getId();
 
-        request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId);
+        request = new ProductRequest("Laptop", 999.99, "Powerful laptop", categoryId, List.of());
     }
 
     // ============================================================
@@ -157,7 +159,7 @@ class ProductIntegrationTest extends IntegrationTestBase {
                 TestDataFactory.product("Old", 100, "Old desc", getCategory())
         );
 
-        ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId);
+        ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId, List.of());
 
         mvc.perform(put("/products/" + saved.getId())
                         .header("Authorization", "Bearer " + adminToken)
@@ -173,7 +175,7 @@ class ProductIntegrationTest extends IntegrationTestBase {
                 TestDataFactory.product("Old", 100, "Old desc", getCategory())
         );
 
-        ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId);
+        ProductRequest update = new ProductRequest("New", 200, "Updated", categoryId, List.of());
 
         mvc.perform(put("/products/" + saved.getId())
                         .header("Authorization", "Bearer " + userToken)

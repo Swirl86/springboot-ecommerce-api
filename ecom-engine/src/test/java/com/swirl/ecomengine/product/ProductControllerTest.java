@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.product.controller.ProductController;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
+import com.swirl.ecomengine.product.exception.ProductCategoryMismatchException;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
+import com.swirl.ecomengine.product.service.ProductService;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import testsupport.SecurityTestConfigMinimal;
+import testsupport.TestDataFactory;
 
 import java.util.List;
 
@@ -48,9 +51,18 @@ class ProductControllerTest {
 
     @BeforeEach
     void setup() {
-        request = new ProductRequest("Laptop", 999.99, "Powerful laptop", 10L);
-        response1 = new ProductResponse(1L, "Laptop", 999.99, "Powerful", 10L, "Electronics");
-        response2 = new ProductResponse(2L, "Phone", 499.99, "Smartphone", 10L, "Electronics");
+        request = TestDataFactory.productRequest(10L);
+
+        response1 = TestDataFactory.defaultProductResponse(1L);
+        response2 = new ProductResponse(
+                2L,
+                "Phone",
+                499.99,
+                "Smartphone",
+                10L,
+                "Electronics",
+                List.of("https://example.com/phone.jpg")
+        );
     }
 
     // ============================================================
@@ -66,7 +78,9 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Laptop"))
                 .andExpect(jsonPath("$.categoryId").value(10))
-                .andExpect(jsonPath("$.categoryName").value("Electronics"));
+                .andExpect(jsonPath("$.categoryName").value("Electronics"))
+                .andExpect(jsonPath("$.imageUrls.length()").value(1))
+                .andExpect(jsonPath("$.imageUrls[0]").value("https://example.com/laptop.jpg"));
     }
 
     @Test
@@ -143,6 +157,24 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.pageable.pageSize").value(20));
     }
 
+
+    // ============================================================
+    // GET /products/search
+    // ============================================================
+    @Test
+    void searchProducts_shouldReturn200_withResults() throws Exception {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<ProductResponse> page = new PageImpl<>(List.of(response1), pageable, 1);
+
+        when(productService.searchProducts(any(), any(), any(), any(), any()))
+                .thenReturn(page);
+
+        mvc.perform(get("/products/search?q=Laptop"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Laptop"));
+    }
+
     // ============================================================
     // POST /products
     // ============================================================
@@ -167,7 +199,8 @@ class ProductControllerTest {
                 "",   // invalid name
                 -10,  // invalid price
                 "desc",
-                10L
+                10L,
+                List.of()
         );
 
         mvc.perform(post("/products")
@@ -188,7 +221,19 @@ class ProductControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1));
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.imageUrls.length()").value(1));
+    }
+
+    @Test
+    void updateProduct_shouldReturn400_whenCategoryMismatch() throws Exception {
+        doThrow(new ProductCategoryMismatchException(99L))
+                .when(productService).updateProduct(eq(1L), any());
+
+        mvc.perform(put("/products/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     // ============================================================

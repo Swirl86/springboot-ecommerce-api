@@ -30,6 +30,9 @@ class ProductMapperTest {
         assertThat(dto.description()).isEqualTo(product.getDescription());
         assertThat(dto.categoryId()).isEqualTo(10L);
         assertThat(dto.categoryName()).isEqualTo(category.getName());
+        assertThat(dto.imageUrls()).isNotNull();
+        assertThat(dto.imageUrls()).hasSize(1);
+        assertThat(dto.imageUrls().get(0)).isEqualTo("https://example.com/laptop.jpg");
     }
 
     // ---------------------------------------------------------
