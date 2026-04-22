@@ -25,7 +25,11 @@ public class CorsConfig {
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
         // Allowed headers
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // Wildcard headers are used because Spring Security adds dynamic headers
+        // (e.g., WWW-Authenticate) during auth failures. Firefox requires all such
+        // headers to be allowed explicitly, so '*' ensures stable CORS behavior
+        // when using CorsFilter together with Spring Security.
+        config.addExposedHeader("*");
 
         // Allow cookies / credentials
         config.setAllowCredentials(true);
