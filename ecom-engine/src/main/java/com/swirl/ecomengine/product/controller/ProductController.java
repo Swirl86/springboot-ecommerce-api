@@ -1,8 +1,8 @@
 package com.swirl.ecomengine.product.controller;
 
-import com.swirl.ecomengine.product.ProductService;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
+import com.swirl.ecomengine.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,7 +33,7 @@ public class ProductController {
     // ---------------------------------------------------------
     @Operation(
             summary = "Get all products",
-            description = "Returns a paginated list of products with category information."
+            description = "Returns a paginated list of products including category and image URLs."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Products retrieved successfully")
@@ -72,7 +72,7 @@ public class ProductController {
                 - Filtering:
                     ?categoryId=3
                     ?minPrice=100&maxPrice=500
-                    ?q=laptop
+                    ?q=laptop (searches name + description)
                 """
     )
     @GetMapping("/search")
@@ -90,7 +90,10 @@ public class ProductController {
     // CREATE (ADMIN ONLY)
     // ---------------------------------------------------------
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Create a new product", description = "Creates a product and assigns it to a category.")
+    @Operation(
+            summary = "Create a new product",
+            description = "Creates a product with name, price, description, category and optional image URLs."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Product created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid product data")
@@ -105,7 +108,10 @@ public class ProductController {
     // UPDATE (ADMIN ONLY)
     // ---------------------------------------------------------
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update an existing product", description = "Updates product fields and category.")
+    @Operation(
+            summary = "Update an existing product",
+            description = "Updates product fields, category and image URLs."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Product updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid product data"),

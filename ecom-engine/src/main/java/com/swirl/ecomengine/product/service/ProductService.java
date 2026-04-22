@@ -1,14 +1,21 @@
-package com.swirl.ecomengine.product;
+package com.swirl.ecomengine.product.service;
 
 import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.service.CategoryService;
+import com.swirl.ecomengine.product.Product;
+import com.swirl.ecomengine.product.ProductMapper;
+import com.swirl.ecomengine.product.ProductRepository;
+import com.swirl.ecomengine.product.ProductSpecifications;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
+import com.swirl.ecomengine.product.exception.ProductCategoryMismatchException;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ProductService {
@@ -75,13 +82,7 @@ public class ProductService {
     public ProductResponse createProduct(ProductRequest request) {
         Category category = categoryService.getById(request.categoryId());
 
-        Product product = new Product(
-                null,
-                request.name(),
-                request.price(),
-                request.description(),
-                category
-        );
+        Product product = mapper.toEntity(request, category);
 
         Product saved = productRepository.save(product);
         return mapper.toResponse(saved);
@@ -93,12 +94,18 @@ public class ProductService {
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = getById(id);
 
+        Category category = categoryService.getById(request.categoryId());
+        if (category == null) {
+            throw new ProductCategoryMismatchException(request.categoryId());
+        }
+
         product.setName(request.name());
         product.setPrice(request.price());
         product.setDescription(request.description());
-
-        Category category = categoryService.getById(request.categoryId());
         product.setCategory(category);
+        product.setImageUrls(
+                request.imageUrls() != null ? request.imageUrls() : List.of()
+        );
 
         Product updated = productRepository.save(product);
         return mapper.toResponse(updated);

@@ -6,13 +6,15 @@ import com.swirl.ecomengine.cart.service.CartService;
 import com.swirl.ecomengine.category.Category;
 import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.service.CategoryService;
-import com.swirl.ecomengine.product.ProductService;
 import com.swirl.ecomengine.product.dto.ProductRequest;
+import com.swirl.ecomengine.product.service.ProductService;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.service.UserService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @Profile("dev") // Only runs when running with --spring.profiles.active=dev
@@ -124,7 +126,8 @@ public class DataSeeder implements CommandLineRunner {
                 name,
                 price,
                 desc,
-                category.getId()
+                category.getId(),
+                List.of()
         ));
 
         return created.id();

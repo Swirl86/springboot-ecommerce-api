@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import java.util.List;
+
 public record ProductRequest(
         @NotBlank(message = "Name is required")
         String name,
@@ -14,6 +16,8 @@ public record ProductRequest(
         String description,
 
         @NotNull(message = "Category ID is required")
-        Long categoryId
+        Long categoryId,
+
+        List<String> imageUrls
 ) {}
 
