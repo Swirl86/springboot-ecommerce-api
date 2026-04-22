@@ -27,7 +27,9 @@ public final class SecurityRules {
             "/orders/*/history/**",
             "/users/me",
             "/users/me/address",
-            "/users/me/full-profile"
+            "/users/me/full-profile",
+            "/wishlist",
+            "/wishlist/**"
     };
 
     // Endpoints accessible to authenticated users (POST, PUT, DELETE)
@@ -35,7 +37,8 @@ public final class SecurityRules {
             "/cart/**",
             "/orders/checkout",
             "/users/me",
-            "/users/me/address"
+            "/users/me/address",
+            "/wishlist/**"
     };
 
     // Endpoints restricted to ADMIN role
