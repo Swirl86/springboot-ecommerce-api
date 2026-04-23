@@ -10,6 +10,17 @@ This project starts simple and will grow gradually, with many small and clear co
 
 ---
 
+## 🔗 Frontend Client
+
+A dedicated React frontend is being developed for this backend API: 
+[**ecommerce-react-client**](https://github.com/Swirl86/ecommerce-react-client)
+
+The client is built with React (Vite), Tailwind CSS and integrates directly with this Spring Boot API.
+
+The goal is to create a clean, modern and fully integrated full‑stack e‑commerce application.
+
+---
+
 ## 📚 Project Goals
 
 - Improve backend development skills in Java
