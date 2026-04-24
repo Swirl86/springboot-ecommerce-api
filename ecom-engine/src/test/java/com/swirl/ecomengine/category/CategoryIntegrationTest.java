@@ -9,16 +9,12 @@ import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
-import java.util.Optional;
-
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,10 +29,6 @@ class CategoryIntegrationTest extends IntegrationTestBase {
     @Autowired private CategoryRepository categoryRepository;
 
     @Autowired private UserRepository userRepository;
-
-    @Autowired
-    @Qualifier("jwtUserRepository")
-    private UserRepository mockUserRepository;
 
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
@@ -54,10 +46,6 @@ class CategoryIntegrationTest extends IntegrationTestBase {
         // Create USER
         User user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
-
-        // Mock JWT lookup
-        when(mockUserRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
-        when(mockUserRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
 
         request = new CategoryRequest("Electronics");
     }
@@ -115,8 +103,7 @@ class CategoryIntegrationTest extends IntegrationTestBase {
         categoryRepository.save(TestDataFactory.category("Electronics"));
         categoryRepository.save(TestDataFactory.category("Accessories"));
 
-        mvc.perform(get("/categories")
-                        .header("Authorization", "Bearer " + userToken))
+        mvc.perform(get("/categories"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.content[*].name").value(
@@ -129,8 +116,7 @@ class CategoryIntegrationTest extends IntegrationTestBase {
 
     @Test
     void getAllCategories_shouldReturnEmptyPage_whenNoneExist() throws Exception {
-        mvc.perform(get("/categories")
-                        .header("Authorization", "Bearer " + userToken))
+        mvc.perform(get("/categories"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty())
                 .andExpect(jsonPath("$.totalElements").value(0))
@@ -145,8 +131,7 @@ class CategoryIntegrationTest extends IntegrationTestBase {
             categoryRepository.save(TestDataFactory.category("C" + i));
         }
 
-        mvc.perform(get("/categories?page=2&size=5")
-                        .header("Authorization", "Bearer " + userToken))
+        mvc.perform(get("/categories?page=2&size=5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1)) // page 2 contains only item 11
                 .andExpect(jsonPath("$.totalElements").value(11))
@@ -163,16 +148,14 @@ class CategoryIntegrationTest extends IntegrationTestBase {
     void userCanGetCategoryById() throws Exception {
         Category saved = categoryRepository.save(TestDataFactory.category("Electronics"));
 
-        mvc.perform(get("/categories/" + saved.getId())
-                        .header("Authorization", "Bearer " + userToken))
+        mvc.perform(get("/categories/" + saved.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Electronics"));
     }
 
     @Test
     void getCategory_notFound_returns404() throws Exception {
-        mvc.perform(get("/categories/999")
-                        .header("Authorization", "Bearer " + userToken))
+        mvc.perform(get("/categories/999"))
                 .andExpect(status().isNotFound());
     }
 }

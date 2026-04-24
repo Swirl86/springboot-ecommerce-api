@@ -4,9 +4,15 @@ public final class SecurityRules {
 
     private SecurityRules() {}
 
-    // Public endpoints (no authentication required)
-    public static final String[] PUBLIC = {
+    // Public auth endpoints (login, register)
+    public static final String[] AUTH = {
             "/auth/**"
+    };
+
+    // Public GET endpoints
+    public static final String[] PUBLIC = {
+            "/products/**",
+            "/categories/**"
     };
 
     // Swagger (open only in dev)
@@ -19,8 +25,6 @@ public final class SecurityRules {
 
     // Endpoints accessible to authenticated users (GET)
     public static final String[] USER_READ = {
-            "/products/**",
-            "/categories/**",
             "/cart/**",
             "/orders",          // list orders
             "/orders/*",         // get order by id

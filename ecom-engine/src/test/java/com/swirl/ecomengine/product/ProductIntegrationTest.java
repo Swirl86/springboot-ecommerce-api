@@ -95,16 +95,14 @@ class ProductIntegrationTest extends IntegrationTestBase {
                 TestDataFactory.defaultProduct(getCategory())
         );
 
-        mvc.perform(get("/products/" + saved.getId())
-                        .header("Authorization", "Bearer " + adminToken))
+        mvc.perform(get("/products/" + saved.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Laptop"));
     }
 
     @Test
     void getProduct_shouldReturn404_whenNotFound() throws Exception {
-        mvc.perform(get("/products/999")
-                        .header("Authorization", "Bearer " + adminToken))
+        mvc.perform(get("/products/999"))
                 .andExpect(status().isNotFound());
     }
 
@@ -118,8 +116,7 @@ class ProductIntegrationTest extends IntegrationTestBase {
         productRepository.save(TestDataFactory.product("P2", 20, "d2", getCategory()));
         productRepository.save(TestDataFactory.product("P3", 30, "d3", getCategory()));
 
-        mvc.perform(get("/products")
-                        .header("Authorization", "Bearer " + userToken))
+        mvc.perform(get("/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(3))
                 .andExpect(jsonPath("$.totalElements").value(3))
@@ -139,10 +136,9 @@ class ProductIntegrationTest extends IntegrationTestBase {
             productRepository.save(TestDataFactory.product("P" + i, i * 10, "desc", getCategory()));
         }
 
-        mvc.perform(get("/products?page=2&size=5")
-                        .header("Authorization", "Bearer " + userToken))
+        mvc.perform(get("/products?page=2&size=5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content.length()").value(2)) // page 2 contains items 11–12
+                .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.totalElements").value(12))
                 .andExpect(jsonPath("$.totalPages").value(3))
                 .andExpect(jsonPath("$.pageable.pageNumber").value(2))

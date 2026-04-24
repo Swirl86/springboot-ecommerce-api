@@ -8,18 +8,14 @@ import com.swirl.ecomengine.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import testsupport.IntegrationTestBase;
 import testsupport.TestDataFactory;
 
-import java.util.Optional;
-
 import static com.swirl.ecomengine.order.OrderStatus.PROCESSING;
 import static com.swirl.ecomengine.order.OrderStatus.SHIPPED;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,10 +25,6 @@ class OrderControllerStatusTest extends IntegrationTestBase {
     @Autowired private ObjectMapper json;
 
     @Autowired private UserRepository userRepository;
-
-    @Autowired
-    @Qualifier("jwtUserRepository")
-    private UserRepository mockUserRepository;
 
     @Autowired private JwtService jwtService;
     @Autowired private PasswordEncoder passwordEncoder;
@@ -53,10 +45,6 @@ class OrderControllerStatusTest extends IntegrationTestBase {
         // Create USER
         user = userRepository.save(TestDataFactory.user(passwordEncoder));
         userToken = jwtService.generateToken(user);
-
-        // Mock JWT filter lookup
-        when(mockUserRepository.findByEmail(admin.getEmail())).thenReturn(Optional.of(admin));
-        when(mockUserRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
     }
 
     // ---------------------------------------------------------

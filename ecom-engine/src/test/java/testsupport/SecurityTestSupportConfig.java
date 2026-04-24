@@ -10,27 +10,32 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
 /**
- * Minimal support configuration for full @SpringBootTest integration tests.
+ * Lightweight security support configuration for tests.
  * <pre>
- * This configuration is designed to:
- *  - Provide a stable JwtService with a static secret for predictable JWTs
- *  - Provide AuthRateLimiter and CorsConfig so the real SecurityConfig can initialize
- *  - Provide consistent Jackson configuration for LocalDateTime serialization
+ * This configuration is intended for:
+ *  - @SpringBootTest integration tests that rely on the real SecurityConfig
+ *  - Tests that need a stable JwtService with a static secret
+ *  - Tests that require SecurityConfig dependencies (AuthRateLimiter, CorsConfig)
+ * <pre>
+ * What this configuration DOES:
+ *  - Provides a test‑friendly JwtService (static secret, predictable tokens)
+ *  - Provides AuthRateLimiter and CorsConfig so SecurityConfig can initialize
+ *  - Provides Jackson configuration so LocalDateTime serializes correctly
  * <pre>
  * What this configuration DOES NOT do:
- *  - It does NOT override the real SecurityFilterChain
- *  - It does NOT replace JwtAuthenticationFilter
- *  - It does NOT mock repositories or security components
+ *  - It does NOT replace the real SecurityFilterChain
+ *  - It does NOT mock UserRepository
+ *  - It does NOT override JwtAuthenticationFilter
  * <pre>
- * This ensures that integration tests run against the real security setup
+ * This ensures that integration tests run against the real security setup,
  * while still having deterministic JWT behavior and required dependencies.
  */
 @TestConfiguration
-public class IntegrationTestConfig {
+public class SecurityTestSupportConfig {
 
     /**
      * Test‑friendly JwtService with a static secret.
-     * Ensures predictable JWT generation and validation in integration tests.
+     * Ensures predictable JWT generation and validation in tests.
      */
     @Bean
     public JwtService testJwtService() {
@@ -42,7 +47,7 @@ public class IntegrationTestConfig {
 
     /**
      * Required by SecurityConfig.
-     * Active but harmless in test environments.
+     * The limiter is active but harmless in test environments.
      */
     @Bean
     public AuthRateLimiter testAuthRateLimiter() {

@@ -53,22 +53,30 @@ public class SecurityConfig {
 
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(SecurityRules.PUBLIC).permitAll()
 
-                        // Swagger is denied here; in 'dev' this is overridden by SwaggerSecurityConfig
+                        // PUBLIC endpoints
+                        .requestMatchers(SecurityRules.AUTH).permitAll()
+                        .requestMatchers(HttpMethod.GET, SecurityRules.PUBLIC).permitAll()
+
+                        // Swagger (denied unless dev profile overrides)
                         .requestMatchers(SWAGGER).denyAll()
 
-                        // USER
+                        // USER READ
                         .requestMatchers(HttpMethod.GET, SecurityRules.USER_READ).authenticated()
+
+                        // USER WRITE
                         .requestMatchers(HttpMethod.POST, SecurityRules.USER_WRITE).authenticated()
                         .requestMatchers(HttpMethod.PUT, SecurityRules.USER_WRITE).authenticated()
                         .requestMatchers(HttpMethod.DELETE, SecurityRules.USER_WRITE).authenticated()
 
-                        // ADMIN
+                        // ADMIN WRITE
                         .requestMatchers(HttpMethod.POST, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, SecurityRules.ADMIN_WRITE).hasRole("ADMIN")
+
+                        // Everything else requires authentication
+                        .anyRequest().authenticated()
                 )
 
                 // Filters

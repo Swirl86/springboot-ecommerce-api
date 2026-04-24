@@ -43,9 +43,6 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        // ---------------------------------------------------------
-        // Create test user
-        // ---------------------------------------------------------
         var auth = authService.register(new RegisterRequest(
                 "test@gmail.com",
                 "12345678"
@@ -53,9 +50,6 @@ public class DataSeeder implements CommandLineRunner {
 
         User user = userService.getById(auth.userId());
 
-        // -----------------------------
-        // Create or fetch categories
-        // -----------------------------
         var electronics = ensureCategory("Electronics");
         var accessories = ensureCategory("Accessories");
         var home = ensureCategory("Home & Kitchen");
@@ -63,48 +57,48 @@ public class DataSeeder implements CommandLineRunner {
         var sports = ensureCategory("Sports & Outdoors");
 
         // -----------------------------
-        // Electronics
+        // Electronics (2–3 images)
         // -----------------------------
-        var laptopId = createProduct("Laptop", 999.99, "Powerful laptop", electronics);
-        var smartphoneId = createProduct("Smartphone", 699.99, "Latest model smartphone", electronics);
-        var tabletId = createProduct("Tablet", 399.99, "Portable tablet", electronics);
+        var laptopId = createProduct("Laptop", 999.99, "Powerful laptop", electronics, 3);
+        var smartphoneId = createProduct("Smartphone", 699.99, "Latest model smartphone", electronics, 2);
+        var tabletId = createProduct("Tablet", 399.99, "Portable tablet", electronics, 2);
 
-        createProduct("Bluetooth Speaker", 89.99, "Wireless speaker", electronics);
-        createProduct("Smartwatch", 199.99, "Fitness tracking smartwatch", electronics);
-
-        // -----------------------------
-        // Accessories
-        // -----------------------------
-        createProduct("Headphones", 199.99, "Noise cancelling headphones", accessories);
-        createProduct("Keyboard", 49.99, "Mechanical keyboard", accessories);
-        createProduct("Mouse", 29.99, "Wireless mouse", accessories);
-        createProduct("USB-C Cable", 9.99, "Durable USB-C charging cable", accessories);
-        createProduct("Laptop Stand", 39.99, "Ergonomic laptop stand", accessories);
+        createProduct("Bluetooth Speaker", 89.99, "Wireless speaker", electronics, 1);
+        createProduct("Smartwatch", 199.99, "Fitness tracking smartwatch", electronics, 2);
 
         // -----------------------------
-        // Home & Kitchen
+        // Accessories (1 image)
         // -----------------------------
-        createProduct("Coffee Maker", 79.99, "Automatic coffee machine", home);
-        createProduct("Blender", 59.99, "High-speed blender", home);
-        createProduct("Air Fryer", 129.99, "Healthy cooking air fryer", home);
+        createProduct("Headphones", 199.99, "Noise cancelling headphones", accessories, 1);
+        createProduct("Keyboard", 49.99, "Mechanical keyboard", accessories, 1);
+        createProduct("Mouse", 29.99, "Wireless mouse", accessories, 1);
+        createProduct("USB-C Cable", 9.99, "Durable USB-C charging cable", accessories, 0);
+        createProduct("Laptop Stand", 39.99, "Ergonomic laptop stand", accessories, 1);
 
         // -----------------------------
-        // Clothing
+        // Home & Kitchen (no images)
         // -----------------------------
-        createProduct("T-Shirt", 19.99, "Cotton t-shirt", clothing);
-        createProduct("Hoodie", 39.99, "Warm hoodie", clothing);
-        createProduct("Jeans", 49.99, "Slim fit jeans", clothing);
+        createProduct("Coffee Maker", 79.99, "Automatic coffee machine", home, 0);
+        createProduct("Blender", 59.99, "High-speed blender", home, 0);
+        createProduct("Air Fryer", 129.99, "Healthy cooking air fryer", home, 0);
 
         // -----------------------------
-        // Sports & Outdoors
+        // Clothing (1 image)
         // -----------------------------
-        createProduct("Yoga Mat", 24.99, "Non-slip yoga mat", sports);
-        createProduct("Dumbbells", 49.99, "Set of dumbbells", sports);
-        createProduct("Running Shoes", 89.99, "Lightweight running shoes", sports);
+        createProduct("T-Shirt", 19.99, "Cotton t-shirt", clothing, 1);
+        createProduct("Hoodie", 39.99, "Warm hoodie", clothing, 1);
+        createProduct("Jeans", 49.99, "Slim fit jeans", clothing, 1);
 
-        // ---------------------------------------------------------
-        // Seed cart for test user
-        // ---------------------------------------------------------
+        // -----------------------------
+        // Sports & Outdoors (0–1 images)
+        // -----------------------------
+        createProduct("Yoga Mat", 24.99, "Non-slip yoga mat", sports, 0);
+        createProduct("Dumbbells", 49.99, "Set of dumbbells", sports, 1);
+        createProduct("Running Shoes", 89.99, "Lightweight running shoes", sports, 1);
+
+        // -----------------------------
+        // Seed cart
+        // -----------------------------
         cartService.addItem(user, laptopId, 3);
         cartService.addItem(user, smartphoneId, 2);
         cartService.addItem(user, tabletId, 1);
@@ -121,15 +115,23 @@ public class DataSeeder implements CommandLineRunner {
                 });
     }
 
-    private Long createProduct(String name, double price, String desc, Category category) {
+    private Long createProduct(String name, double price, String desc, Category category, int imageCount) {
         var created = productService.createProduct(new ProductRequest(
                 name,
                 price,
                 desc,
                 category.getId(),
-                List.of()
+                randomImages(imageCount)
         ));
 
         return created.id();
+    }
+
+    private List<String> randomImages(int count) {
+        if (count <= 0) return List.of();
+
+        return java.util.stream.IntStream.range(0, count)
+                .mapToObj(i -> "https://picsum.photos/400?random=" + (int)(Math.random() * 10000))
+                .toList();
     }
 }

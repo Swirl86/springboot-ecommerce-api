@@ -11,20 +11,30 @@ import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import testsupport.IntegrationTestBase;
+import testsupport.SecurityTestSupportConfig;
 import testsupport.TestDataFactory;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class SecurityIntegrationTest extends IntegrationTestBase {
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(SecurityTestSupportConfig.class)
+@ActiveProfiles("test-integration")
+@Transactional
+class SecurityIntegrationTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper json;
@@ -86,9 +96,9 @@ class SecurityIntegrationTest extends IntegrationTestBase {
     // ============================================================
 
     @Test
-    void getProducts_shouldRequireAuthentication() throws Exception {
+    void getProducts_shouldBePublic() throws Exception {
         mvc.perform(get("/products"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -135,20 +145,20 @@ class SecurityIntegrationTest extends IntegrationTestBase {
     }
 
     // ============================================================
-    // TOKEN VALIDATION
+    // TOKEN VALIDATION (must use protected endpoint)
     // ============================================================
 
     @Test
     void requestShouldReturn401_whenTokenIsInvalid() throws Exception {
-        mvc.perform(get("/products")
+        mvc.perform(get("/cart")
                         .header("Authorization", "Bearer invalid.token.value"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void requestShouldReturn401_whenTokenIsMissingBearerPrefix() throws Exception {
-        mvc.perform(get("/products")
-                        .header("Authorization", adminToken)) // missing "Bearer "
+        mvc.perform(get("/cart")
+                        .header("Authorization", adminToken)) // missing Bearer
                 .andExpect(status().isUnauthorized());
     }
 }
