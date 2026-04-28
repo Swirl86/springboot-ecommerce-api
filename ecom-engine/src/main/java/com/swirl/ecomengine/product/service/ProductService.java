@@ -129,7 +129,7 @@ public class ProductService {
         return productRepository.findLastUpdated();
     }
 
-    public LocalDateTime getLastUpdatedFiltered(Long categoryId, Double minPrice, Double maxPrice, String searchTerm) {
-        return productRepository.findLastUpdatedFiltered(categoryId, minPrice, maxPrice, searchTerm);
+    public LocalDateTime getLastUpdatedFiltered(Long categoryId, Double minPrice, Double maxPrice, String query) {
+        return productRepository.findLastUpdatedFiltered(categoryId, minPrice, maxPrice, query);
     }
 }

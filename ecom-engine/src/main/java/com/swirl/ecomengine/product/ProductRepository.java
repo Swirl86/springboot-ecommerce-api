@@ -17,13 +17,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     WHERE (:categoryId IS NULL OR p.category.id = :categoryId)
       AND (:minPrice IS NULL OR p.price >= :minPrice)
       AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-      AND (:q IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')))
-""")
+      AND (:query IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')))
+    """)
     LocalDateTime findLastUpdatedFiltered(
             @Param("categoryId") Long categoryId,
             @Param("minPrice") Double minPrice,
             @Param("maxPrice") Double maxPrice,
-            @Param("q") String q
+            @Param("query") String query
     );
 }
 
