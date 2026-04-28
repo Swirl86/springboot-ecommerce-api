@@ -1,6 +1,7 @@
 package com.swirl.ecomengine.product;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swirl.ecomengine.common.etag.EtagService;
 import com.swirl.ecomengine.product.controller.ProductController;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import testsupport.SecurityTestConfigMinimal;
 import testsupport.TestDataFactory;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -31,8 +33,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
 @Import(SecurityTestConfigMinimal.class)
@@ -44,6 +45,7 @@ class ProductControllerTest {
 
     @MockBean private ProductService productService;
     @MockBean private AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
+    @MockBean private EtagService etagService;
 
     private ProductResponse response1;
     private ProductResponse response2;
@@ -266,5 +268,41 @@ class ProductControllerTest {
 
         mvc.perform(get("/products/1"))
                 .andExpect(status().isInternalServerError());
+    }
+
+    // ============================================================
+    // ETAG
+    // ============================================================
+
+    @Test
+    void getAllProducts_shouldReturn304_whenEtagMatches() throws Exception {
+        String etag = "\"2024-01-01T10:00:00\"";
+
+        when(productService.getLastUpdated()).thenReturn(LocalDateTime.parse("2024-01-01T10:00:00"));
+        when(etagService.generate(any())).thenReturn(etag);
+        when(etagService.matches(eq(etag), eq(etag))).thenReturn(true);
+
+        mvc.perform(get("/products")
+                        .header("If-None-Match", etag))
+                .andExpect(status().isNotModified())
+                .andExpect(header().string("ETag", etag));
+    }
+
+    @Test
+    void getAllProducts_shouldReturn200_andEtag_whenEtagDoesNotMatch() throws Exception {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<ProductResponse> page = new PageImpl<>(List.of(response1), pageable, 1);
+
+        String etag = "\"2024-01-01T10:00:00\"";
+
+        when(productService.getLastUpdated()).thenReturn(LocalDateTime.parse("2024-01-01T10:00:00"));
+        when(etagService.generate(any())).thenReturn(etag);
+        when(etagService.matches(any(), any())).thenReturn(false);
+        when(productService.getAllProducts(any())).thenReturn(page);
+
+        mvc.perform(get("/products"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("ETag", etag))
+                .andExpect(jsonPath("$.content.length()").value(1));
     }
 }

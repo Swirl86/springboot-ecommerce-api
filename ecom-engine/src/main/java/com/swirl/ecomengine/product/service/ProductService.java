@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -119,5 +120,16 @@ public class ProductService {
             throw new ProductNotFoundException(id);
         }
         productRepository.deleteById(id);
+    }
+
+    // ---------------------------------------------------------
+    // ETag helpers
+    // ---------------------------------------------------------
+    public LocalDateTime getLastUpdated() {
+        return productRepository.findLastUpdated();
+    }
+
+    public LocalDateTime getLastUpdatedFiltered(Long categoryId, Double minPrice, Double maxPrice, String searchTerm) {
+        return productRepository.findLastUpdatedFiltered(categoryId, minPrice, maxPrice, searchTerm);
     }
 }

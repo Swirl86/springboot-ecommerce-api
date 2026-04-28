@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,8 @@ class CategoryServiceTest {
     private CategoryRepository repo;
     private CategoryMapper mapper;
     private CategoryService service;
+
+    private final LocalDateTime now = LocalDateTime.now();
 
     @BeforeEach
     void setup() {
@@ -95,7 +98,7 @@ class CategoryServiceTest {
         Category category = defaultCategory();
         category.setId(1L);
 
-        CategoryResponse response = new CategoryResponse(1L, "Electronics");
+        CategoryResponse response = new CategoryResponse(1L, "Electronics", now);
 
         when(repo.findById(1L)).thenReturn(Optional.of(category));
         when(mapper.toResponse(category)).thenReturn(response);
@@ -121,8 +124,8 @@ class CategoryServiceTest {
         Page<Category> page = new PageImpl<>(List.of(c1, c2), pageable, 2);
 
         when(repo.findAll(pageable)).thenReturn(page);
-        when(mapper.toResponse(c1)).thenReturn(new CategoryResponse(1L, "Electronics"));
-        when(mapper.toResponse(c2)).thenReturn(new CategoryResponse(2L, "Books"));
+        when(mapper.toResponse(c1)).thenReturn(new CategoryResponse(1L, "Electronics", now));
+        when(mapper.toResponse(c2)).thenReturn(new CategoryResponse(2L, "Books", now));
 
         Page<CategoryResponse> result = service.getAll(pageable);
 
@@ -160,7 +163,7 @@ class CategoryServiceTest {
         Category saved = category("NewCat");
         saved.setId(1L);
 
-        CategoryResponse response = new CategoryResponse(1L, "NewCat");
+        CategoryResponse response = new CategoryResponse(1L, "NewCat", now);
 
         when(repo.findByNameIgnoreCase("NewCat")).thenReturn(Optional.empty());
         when(repo.save(any(Category.class))).thenReturn(saved);
@@ -208,7 +211,7 @@ class CategoryServiceTest {
         Category updated = category("UpdatedName");
         updated.setId(1L);
 
-        CategoryResponse response = new CategoryResponse(1L, "UpdatedName");
+        CategoryResponse response = new CategoryResponse(1L, "UpdatedName", now);
 
         when(repo.findById(1L)).thenReturn(Optional.of(existing));
         when(repo.save(existing)).thenReturn(updated);

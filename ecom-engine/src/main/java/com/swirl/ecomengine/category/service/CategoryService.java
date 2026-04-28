@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -103,5 +104,12 @@ public class CategoryService {
             throw new CategoryNotFoundException(id);
         }
         repo.deleteById(id);
+    }
+
+    // ---------------------------------------------------------
+    // ETag helpers
+    // ---------------------------------------------------------
+    public LocalDateTime getLastUpdated() {
+        return repo.findLastUpdated();
     }
 }

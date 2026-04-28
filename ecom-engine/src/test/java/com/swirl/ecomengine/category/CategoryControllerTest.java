@@ -6,6 +6,7 @@ import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.category.exception.CategoryNotFoundException;
 import com.swirl.ecomengine.category.service.CategoryService;
+import com.swirl.ecomengine.common.etag.EtagService;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,14 +22,15 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import testsupport.SecurityTestConfigMinimal;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CategoryController.class)
 @Import(SecurityTestConfigMinimal.class)
@@ -40,6 +42,9 @@ class CategoryControllerTest {
 
     @MockBean private CategoryService categoryService;
     @MockBean private AuthenticatedUserArgumentResolver authenticatedUserArgumentResolver;
+    @MockBean private EtagService etagService;
+
+    private final LocalDateTime now = LocalDateTime.now();
 
     // ============================================================
     // GET /categories (paginated)
@@ -50,8 +55,8 @@ class CategoryControllerTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<CategoryResponse> page = new PageImpl<>(
                 List.of(
-                        new CategoryResponse(1L, "Electronics"),
-                        new CategoryResponse(2L, "Accessories")
+                        new CategoryResponse(1L, "Electronics", now),
+                        new CategoryResponse(2L, "Accessories", now)
                 ),
                 pageable,
                 2
@@ -88,7 +93,7 @@ class CategoryControllerTest {
     void getAllCategories_shouldRespectPageAndSizeParameters() throws Exception {
         Pageable pageable = PageRequest.of(2, 5);
         Page<CategoryResponse> page = new PageImpl<>(
-                List.of(new CategoryResponse(11L, "Gaming")),
+                List.of(new CategoryResponse(11L, "Gaming", now)),
                 pageable,
                 11
         );
@@ -111,7 +116,7 @@ class CategoryControllerTest {
 
     @Test
     void getCategoryById_shouldReturn200_whenFound() throws Exception {
-        CategoryResponse response = new CategoryResponse(1L, "Electronics");
+        CategoryResponse response = new CategoryResponse(1L, "Electronics", now);
 
         when(categoryService.getCategoryById(1L)).thenReturn(response);
 
@@ -140,7 +145,7 @@ class CategoryControllerTest {
     @Test
     void createCategory_shouldReturn201_whenValidRequest() throws Exception {
         CategoryRequest request = new CategoryRequest("Electronics");
-        CategoryResponse response = new CategoryResponse(1L, "Electronics");
+        CategoryResponse response = new CategoryResponse(1L, "Electronics", now);
 
         when(categoryService.create(any())).thenReturn(response);
 
@@ -173,5 +178,45 @@ class CategoryControllerTest {
 
         mvc.perform(get("/categories"))
                 .andExpect(status().isInternalServerError());
+    }
+
+    // ============================================================
+    // ETAG
+    // ============================================================
+
+    @Test
+    void getAllCategories_shouldReturn304_whenEtagMatches() throws Exception {
+        String etag = "\"2024-01-01T10:00:00\"";
+
+        when(categoryService.getLastUpdated()).thenReturn(LocalDateTime.parse("2024-01-01T10:00:00"));
+        when(etagService.generate(any())).thenReturn(etag);
+        when(etagService.matches(eq(etag), eq(etag))).thenReturn(true);
+
+        mvc.perform(get("/categories")
+                        .header("If-None-Match", etag))
+                .andExpect(status().isNotModified())
+                .andExpect(header().string("ETag", etag));
+    }
+
+    @Test
+    void getAllCategories_shouldReturn200_andEtag_whenEtagDoesNotMatch() throws Exception {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<CategoryResponse> page = new PageImpl<>(
+                List.of(new CategoryResponse(1L, "Electronics", now)),
+                pageable,
+                1
+        );
+
+        String etag = "\"2024-01-01T10:00:00\"";
+
+        when(categoryService.getLastUpdated()).thenReturn(LocalDateTime.parse("2024-01-01T10:00:00"));
+        when(etagService.generate(any())).thenReturn(etag);
+        when(etagService.matches(any(), any())).thenReturn(false);
+        when(categoryService.getAll(any())).thenReturn(page);
+
+        mvc.perform(get("/categories"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("ETag", etag))
+                .andExpect(jsonPath("$.content.length()").value(1));
     }
 }

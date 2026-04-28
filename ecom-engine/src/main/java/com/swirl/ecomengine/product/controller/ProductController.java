@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.product.controller;
 
+import com.swirl.ecomengine.common.etag.EtagService;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.service.ProductService;
@@ -12,9 +13,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @Tag(name = "Products", description = "Operations related to product management")
 @RestController
@@ -23,9 +27,11 @@ import org.springframework.web.bind.annotation.*;
 public class ProductController {
 
     private final ProductService productService;
+    private final EtagService etags;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, EtagService etags) {
         this.productService = productService;
+        this.etags = etags;
     }
 
     // ---------------------------------------------------------
@@ -39,11 +45,24 @@ public class ProductController {
             @ApiResponse(responseCode = "200", description = "Products retrieved successfully")
     })
     @GetMapping
-    public Page<ProductResponse> getAllProducts(
-            @PageableDefault(size = 20)
-            Pageable pageable
+    public ResponseEntity<Page<ProductResponse>> getAllProducts(
+            @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
+            @PageableDefault(size = 20) Pageable pageable
     ) {
-        return productService.getAllProducts(pageable);
+        LocalDateTime lastUpdated = productService.getLastUpdated();
+        String eTag = etags.generate(lastUpdated);
+
+        if (etags.matches(ifNoneMatch, eTag)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(eTag)
+                    .build();
+        }
+
+        Page<ProductResponse> products = productService.getAllProducts(pageable);
+
+        return ResponseEntity.ok()
+                .eTag(eTag)
+                .body(products);
     }
 
     // ---------------------------------------------------------
@@ -76,14 +95,28 @@ public class ProductController {
                 """
     )
     @GetMapping("/search")
-    public Page<ProductResponse> searchProducts(
+    public ResponseEntity<Page<ProductResponse>> searchProducts(
+            @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String query,
             Pageable pageable
     ) {
-        return productService.searchProducts(categoryId, minPrice, maxPrice, q, pageable);
+        LocalDateTime lastUpdated = productService.getLastUpdatedFiltered(categoryId, minPrice, maxPrice, query);
+        String eTag = etags.generate(lastUpdated);
+
+        if (etags.matches(ifNoneMatch, eTag)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(eTag)
+                    .build();
+        }
+
+        Page<ProductResponse> products = productService.searchProducts(categoryId, minPrice, maxPrice, query, pageable);
+
+        return ResponseEntity.ok()
+                .eTag(eTag)
+                .body(products);
     }
 
     // ---------------------------------------------------------

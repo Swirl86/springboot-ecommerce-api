@@ -3,6 +3,7 @@ package com.swirl.ecomengine.category.controller;
 import com.swirl.ecomengine.category.dto.CategoryRequest;
 import com.swirl.ecomengine.category.dto.CategoryResponse;
 import com.swirl.ecomengine.category.service.CategoryService;
+import com.swirl.ecomengine.common.etag.EtagService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,9 +14,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @Tag(name = "Categories", description = "Operations for managing product categories")
 @RestController
@@ -24,15 +28,16 @@ import org.springframework.web.bind.annotation.*;
 public class CategoryController {
 
     private final CategoryService service;
+    private final EtagService etags;
 
-    public CategoryController(CategoryService service) {
+    public CategoryController(CategoryService service, EtagService etags) {
         this.service = service;
+        this.etags = etags;
     }
 
     // ---------------------------------------------------------
     // GET ALL
     // ---------------------------------------------------------
-    @GetMapping
     @Operation(
             summary = "Get all categories",
             description = "Returns a paginated list of categories."
@@ -40,9 +45,25 @@ public class CategoryController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Categories retrieved successfully")
     })
-    public Page<CategoryResponse> getAll(@PageableDefault(size = 20) Pageable pageable) {
-        return service.getAll(pageable);
+    @GetMapping
+    public ResponseEntity<Page<CategoryResponse>> getAll(
+            @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        LocalDateTime lastUpdated = service.getLastUpdated();
+        String eTag = etags.generate(lastUpdated);
+
+        if (etags.matches(ifNoneMatch, eTag)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(eTag)
+                    .build();
+        }
+
+        return ResponseEntity.ok()
+                .eTag(eTag)
+                .body(service.getAll(pageable));
     }
+
 
     // ---------------------------------------------------------
     // GET BY ID
@@ -54,8 +75,22 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Category not found")
     })
     @GetMapping("/{id}")
-    public CategoryResponse getCategory(@PathVariable @Positive(message = "Category ID must be positive") Long id) {
-        return service.getCategoryById(id);
+    public ResponseEntity<CategoryResponse> getCategory(
+            @PathVariable @Positive Long id,
+            @RequestHeader(value = "If-None-Match", required = false) String ifNoneMatch
+    ) {
+        CategoryResponse category = service.getCategoryById(id);
+        String eTag = etags.generate(category.updatedAt());
+
+        if (etags.matches(ifNoneMatch, eTag)) {
+            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                    .eTag(eTag)
+                    .build();
+        }
+
+        return ResponseEntity.ok()
+                .eTag(eTag)
+                .body(category);
     }
 
     // ---------------------------------------------------------

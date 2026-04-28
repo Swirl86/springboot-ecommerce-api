@@ -55,46 +55,168 @@ public class DataSeeder implements CommandLineRunner {
         var home = ensureCategory("Home & Kitchen");
         var clothing = ensureCategory("Clothing");
         var sports = ensureCategory("Sports & Outdoors");
+        var edgeTests = ensureCategory("Edge Tests");
+        ensureCategory("Empty Category");
 
-        // -----------------------------
-        // Electronics (2–3 images)
-        // -----------------------------
-        var laptopId = createProduct("Laptop", 999.99, "Powerful laptop", electronics, 3);
-        var smartphoneId = createProduct("Smartphone", 699.99, "Latest model smartphone", electronics, 2);
-        var tabletId = createProduct("Tablet", 399.99, "Portable tablet", electronics, 2);
 
-        createProduct("Bluetooth Speaker", 89.99, "Wireless speaker", electronics, 1);
-        createProduct("Smartwatch", 199.99, "Fitness tracking smartwatch", electronics, 2);
+        // ---------------------------------------------------------
+        // Electronics
+        // ---------------------------------------------------------
+        var laptopId = createProduct(
+                "Laptop",
+                999.99,
+                """
+                Powerful laptop with:
+                - Intel i7 13th Gen
+                - 16GB DDR5 RAM
+                - 1TB NVMe SSD
+                - 15.6" 165Hz IPS Display
+                Perfect for gaming, development, and productivity.
+                """,
+                electronics,
+                3
+        );
 
-        // -----------------------------
-        // Accessories (1 image)
-        // -----------------------------
-        createProduct("Headphones", 199.99, "Noise cancelling headphones", accessories, 1);
-        createProduct("Keyboard", 49.99, "Mechanical keyboard", accessories, 1);
-        createProduct("Mouse", 29.99, "Wireless mouse", accessories, 1);
-        createProduct("USB-C Cable", 9.99, "Durable USB-C charging cable", accessories, 0);
-        createProduct("Laptop Stand", 39.99, "Ergonomic laptop stand", accessories, 1);
+        var smartphoneId = createProduct(
+                "Smartphone",
+                699.99,
+                """
+                Latest model smartphone 📱
+                Featuring a 6.7" AMOLED display, 120Hz refresh rate,
+                48MP triple‑camera system, and 5G connectivity.
+                """,
+                electronics,
+                2
+        );
 
-        // -----------------------------
-        // Home & Kitchen (no images)
-        // -----------------------------
-        createProduct("Coffee Maker", 79.99, "Automatic coffee machine", home, 0);
-        createProduct("Blender", 59.99, "High-speed blender", home, 0);
-        createProduct("Air Fryer", 129.99, "Healthy cooking air fryer", home, 0);
+        var tabletId = createProduct(
+                "Tablet",
+                399.99,
+                """
+                Lightweight tablet ideal for reading, streaming, and travel.
+                Battery life up to 12 hours. Supports stylus input.
+                """,
+                electronics,
+                2
+        );
 
-        // -----------------------------
-        // Clothing (1 image)
-        // -----------------------------
-        createProduct("T-Shirt", 19.99, "Cotton t-shirt", clothing, 1);
-        createProduct("Hoodie", 39.99, "Warm hoodie", clothing, 1);
-        createProduct("Jeans", 49.99, "Slim fit jeans", clothing, 1);
+        createProduct("Bluetooth Speaker", 89.99,
+                "Wireless speaker 🔊 with deep bass and 12h battery life.",
+                electronics, 0);
 
-        // -----------------------------
-        // Sports & Outdoors (0–1 images)
-        // -----------------------------
-        createProduct("Yoga Mat", 24.99, "Non-slip yoga mat", sports, 0);
-        createProduct("Dumbbells", 49.99, "Set of dumbbells", sports, 1);
-        createProduct("Running Shoes", 89.99, "Lightweight running shoes", sports, 1);
+        createProduct("Smartwatch", 199.99,
+                "Fitness tracking smartwatch ⌚ with heart‑rate monitor and GPS.",
+                electronics, 2);
+
+        // ---------------------------------------------------------
+        // Accessories
+        // ---------------------------------------------------------
+        createProduct("Headphones", 199.99,
+                "Noise‑cancelling over‑ear headphones 🎧 with deep bass and 40h battery.",
+                accessories, 1);
+
+        createProduct("Keyboard", 49.99,
+                "Mechanical keyboard with blue switches — clicky and satisfying.",
+                accessories, 3);
+
+        createProduct("Mouse", 29.99,
+                "Wireless mouse with ergonomic design.",
+                accessories, 1);
+
+        createProduct("USB‑C Cable", 9.99,
+                "Durable braided USB‑C cable (1.5m). Supports fast charging.",
+                accessories, 0);
+
+        createProduct("Laptop Stand", 39.99,
+                "Ergonomic laptop stand for better posture.",
+                accessories, 2);
+
+        // ---------------------------------------------------------
+        // Home & Kitchen
+        // ---------------------------------------------------------
+        createProduct("Coffee Maker", 79.99,
+                """
+                Wake up to the smell of fresh coffee ☕
+                This automatic coffee maker brews rich, full‑bodied coffee in minutes.
+                """,
+                home, 0);
+
+        createProduct("Blender", 59.99,
+                "High‑speed blender with stainless steel blades.",
+                home, 1);
+
+        createProduct("Air Fryer", 129.99,
+                """
+                Healthy cooking made easy.
+                Crispy fries, juicy chicken, and roasted veggies — all with 80% less oil.
+                """,
+                home, 0);
+
+        // ---------------------------------------------------------
+        // Clothing
+        // ---------------------------------------------------------
+        createProduct("T‑Shirt", 19.99,
+                "Soft cotton t‑shirt available in multiple colors.",
+                clothing, 1);
+
+        createProduct("Hoodie", 39.99,
+                """
+                Warm fleece hoodie with kangaroo pocket.
+                Perfect for chilly evenings or gym warm‑ups.
+                """,
+                clothing, 3);
+
+        createProduct("Jeans", 49.99,
+                """
+                Slim‑fit jeans with stretch denim for comfort.
+                Classic 5‑pocket design.
+                """,
+                clothing, 0);
+
+        // ---------------------------------------------------------
+        // Sports & Outdoors
+        // ---------------------------------------------------------
+        createProduct("Yoga Mat", 24.99,
+                "Non‑slip yoga mat 🧘‍♀️ — 6mm thick for extra comfort.",
+                sports, 0);
+
+        createProduct("Dumbbells", 49.99,
+                "Set of 2×5kg dumbbells — rubber‑coated for durability.",
+                sports, 1);
+
+        createProduct("Running Shoes", 89.99,
+                """
+                Lightweight running shoes with breathable mesh.
+                Designed for comfort on long runs. 🏃‍♂️
+                """,
+                sports, 1);
+
+        // ---------------------------------------------------------
+        // Edge‑case test products
+        // ---------------------------------------------------------
+        createProduct(
+                "Ultra Description Test",
+                15.00,
+                "A".repeat(1500),
+                edgeTests,
+                2
+        );
+
+        createProduct(
+                "Special Chars Test",
+                5.99,
+                "Symbols: !@#$%^&*()_+{}[]|:\";'<>?,./~`",
+                edgeTests,
+                3
+        );
+
+        createProduct(
+                "Unicode Test",
+                7.99,
+                "🔥 Unicode mix test \uD83D\uDE80✨ \uD83C\uDF0D — 日本語 + 한국인 + emojis ✔\uFE0F — rendering check. 💬",
+                edgeTests,
+                1
+        );
 
         // -----------------------------
         // Seed cart

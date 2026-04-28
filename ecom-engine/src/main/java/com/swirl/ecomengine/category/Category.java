@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Setter
 @Getter
 @Entity
@@ -19,10 +21,24 @@ public class Category {
     @Setter
     private String name;
 
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
     public Category() {}
 
     public Category(Long id, String name) {
         this.id = id;
         this.name = name;
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreRemove
+    public void updateTimestampBeforeDelete() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

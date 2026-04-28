@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,8 @@ public class Product {
     @Column(nullable = false)
     private double price;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @ElementCollection
@@ -39,5 +42,19 @@ public class Product {
     @ManyToOne(optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    public void updateTimestamp() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreRemove
+    public void updateTimestampBeforeDelete() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 
