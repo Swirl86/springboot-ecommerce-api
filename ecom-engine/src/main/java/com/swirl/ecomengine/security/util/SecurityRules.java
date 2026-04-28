@@ -12,7 +12,9 @@ public final class SecurityRules {
     // Public GET endpoints
     public static final String[] PUBLIC = {
             "/products/**",
-            "/categories/**"
+            "/categories/**",
+            "/health",
+            "/health/details"
     };
 
     // Swagger (open only in dev)

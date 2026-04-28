@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         // PUBLIC endpoints
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(SecurityRules.AUTH).permitAll()
                         .requestMatchers(HttpMethod.GET, SecurityRules.PUBLIC).permitAll()
 

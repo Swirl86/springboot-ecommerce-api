@@ -29,6 +29,7 @@ public class CorsConfig {
         // (e.g., WWW-Authenticate) during auth failures. Firefox requires all such
         // headers to be allowed explicitly, so '*' ensures stable CORS behavior
         // when using CorsFilter together with Spring Security.
+        config.addAllowedHeader("*");
         config.addExposedHeader("*");
 
         // Allow cookies / credentials
