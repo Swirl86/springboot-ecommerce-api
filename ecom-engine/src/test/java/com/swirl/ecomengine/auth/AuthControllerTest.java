@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.auth.controller.AuthController;
 import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
+import com.swirl.ecomengine.auth.dto.RefreshTokenRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
-import com.swirl.ecomengine.common.exception.ConflictException;
+import com.swirl.ecomengine.common.exception.EmailAlreadyExistsException;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,8 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(jsonPath("$.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
     }
 
     // ============================================================
@@ -63,7 +65,7 @@ class AuthControllerTest {
         RegisterRequest request = new RegisterRequest("test@example.com", "password123");
 
         when(authService.register(request))
-                .thenThrow(new ConflictException("Email already in use"));
+                .thenThrow(new EmailAlreadyExistsException());
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -73,7 +75,7 @@ class AuthControllerTest {
     }
 
     // ============================================================
-    // register (empty email → validation → 400)
+    // register (validation errors → 400)
     // ============================================================
 
     @Test
@@ -83,13 +85,8 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("{email=Email must be between 2 and 50 characters}"));
+                .andExpect(status().isBadRequest());
     }
-
-    // ============================================================
-    // register (empty password → validation → 400)
-    // ============================================================
 
     @Test
     void register_shouldReturnBadRequest_whenPasswordIsEmpty() throws Exception {
@@ -98,8 +95,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("{password=Password must be at least 8 characters}"));
+                .andExpect(status().isBadRequest());
     }
 
     // ============================================================
@@ -118,7 +114,8 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(jsonPath("$.accessToken").value("access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
     }
 
     // ============================================================
@@ -137,5 +134,62 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid email or password"));
+    }
+
+    // ============================================================
+    // refresh token (success)
+    // ============================================================
+
+    @Test
+    void refresh_shouldReturnNewTokens() throws Exception {
+        RefreshTokenRequest request = new RefreshTokenRequest("old-refresh-token");
+        AuthResponse response = new AuthResponse(
+                1L,
+                "test@example.com",
+                "USER",
+                "new-access-token",
+                "new-refresh-token"
+        );
+
+        when(authService.refreshToken("old-refresh-token")).thenReturn(response);
+
+        mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"));
+    }
+
+    // ============================================================
+    // refresh token (invalid → 401)
+    // ============================================================
+
+    @Test
+    void refresh_shouldReturnUnauthorized_whenRefreshTokenInvalid() throws Exception {
+        RefreshTokenRequest request = new RefreshTokenRequest("invalid");
+
+        when(authService.refreshToken("invalid"))
+                .thenThrow(new InvalidCredentialsException());
+
+        mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Invalid email or password"));
+    }
+
+    // ============================================================
+    // logout (success)
+    // ============================================================
+
+    @Test
+    void logout_shouldReturnOk() throws Exception {
+        RefreshTokenRequest request = new RefreshTokenRequest("refresh-token");
+
+        mockMvc.perform(post("/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
     }
 }

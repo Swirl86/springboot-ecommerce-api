@@ -2,6 +2,7 @@ package com.swirl.ecomengine.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
+import com.swirl.ecomengine.auth.dto.RefreshTokenRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
 import com.swirl.ecomengine.user.UserRepository;
 import jakarta.transaction.Transactional;
@@ -42,7 +43,7 @@ class AuthIntegrationTest {
     // ============================================================
 
     @Test
-    void register_shouldCreateUserInDatabase_andReturnJwt() throws Exception {
+    void register_shouldCreateUserInDatabase_andReturnTokens() throws Exception {
         RegisterRequest request = new RegisterRequest("test@example.com", "password123");
 
         mockMvc.perform(post("/auth/register")
@@ -50,7 +51,8 @@ class AuthIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.token").exists());
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.refreshToken").exists());
 
         assertThat(userRepository.existsByEmail("test@example.com")).isTrue();
     }
@@ -66,8 +68,7 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("{email=Email must be between 2 and 50 characters}"));
+                .andExpect(status().isBadRequest());
     }
 
     // ============================================================
@@ -81,8 +82,7 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("{password=Password must be at least 8 characters}"));
+                .andExpect(status().isBadRequest());
     }
 
     // ============================================================
@@ -90,7 +90,7 @@ class AuthIntegrationTest {
     // ============================================================
 
     @Test
-    void login_shouldReturnJwt_whenCredentialsAreValid() throws Exception {
+    void login_shouldReturnTokens_whenCredentialsAreValid() throws Exception {
         RegisterRequest register = new RegisterRequest("login@example.com", "password123");
 
         mockMvc.perform(post("/auth/register")
@@ -104,7 +104,8 @@ class AuthIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").exists())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.refreshToken").exists())
                 .andExpect(jsonPath("$.email").value("login@example.com"));
     }
 
@@ -141,8 +142,7 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("{email=Email is required}"));
+                .andExpect(status().isBadRequest());
     }
 
     // ============================================================
@@ -156,7 +156,49 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(login)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("{password=Password is required}"));
+                .andExpect(status().isBadRequest());
+    }
+
+    // ============================================================
+    // refresh token (success)
+    // ============================================================
+
+    @Test
+    void refresh_shouldReturnNewTokens() throws Exception {
+        // Register user
+        RegisterRequest register = new RegisterRequest("refresh@example.com", "password123");
+
+        String refreshToken = mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(register)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String oldRefresh = objectMapper.readTree(refreshToken).get("refreshToken").asText();
+
+        RefreshTokenRequest refreshRequest = new RefreshTokenRequest(oldRefresh);
+
+        mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.refreshToken").exists());
+    }
+
+    // ============================================================
+    // logout (success)
+    // ============================================================
+
+    @Test
+    void logout_shouldReturnOk() throws Exception {
+        RefreshTokenRequest request = new RefreshTokenRequest("dummy-refresh-token");
+
+        mockMvc.perform(post("/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
     }
 }

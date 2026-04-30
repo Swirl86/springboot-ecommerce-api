@@ -4,7 +4,8 @@ import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
 import com.swirl.ecomengine.auth.exception.InvalidCredentialsException;
-import com.swirl.ecomengine.common.exception.ConflictException;
+import com.swirl.ecomengine.auth.repository.RefreshTokenRepository;
+import com.swirl.ecomengine.common.exception.EmailAlreadyExistsException;
 import com.swirl.ecomengine.security.jwt.JwtService;
 import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     private UserRepository userRepository;
+    private RefreshTokenRepository refreshTokenRepository;
     private PasswordEncoder passwordEncoder;
     private JwtService jwtService;
     private AuthService authService;
@@ -31,9 +33,16 @@ class AuthServiceTest {
     @BeforeEach
     void setup() {
         userRepository = mock(UserRepository.class);
+        refreshTokenRepository = mock(RefreshTokenRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
         jwtService = mock(JwtService.class);
-        authService = new AuthService(userRepository, passwordEncoder, jwtService);
+
+        authService = new AuthService(
+                userRepository,
+                refreshTokenRepository,
+                passwordEncoder,
+                jwtService
+        );
     }
 
     // ============================================================
@@ -41,17 +50,26 @@ class AuthServiceTest {
     // ============================================================
 
     @Test
-    void register_shouldSaveUserAndReturnToken() {
+    void register_shouldSaveUserAndReturnTokens() {
         RegisterRequest request = TestDataFactory.registerRequest();
 
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
         when(passwordEncoder.encode(request.password())).thenReturn("hashed");
-        when(jwtService.generateToken(any(User.class))).thenReturn("jwt-token");
+        when(jwtService.generateToken(any(User.class))).thenReturn("access-token");
+
+        // Mock refresh token creation
+        when(refreshTokenRepository.save(any(RefreshToken.class)))
+                .thenAnswer(invocation -> {
+                    RefreshToken rt = invocation.getArgument(0);
+                    rt.setId(1L);
+                    return rt;
+                });
 
         AuthResponse response = authService.register(request);
 
         assertThat(response.email()).isEqualTo("test@example.com");
-        assertThat(response.token()).isEqualTo("jwt-token");
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isNotNull();
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -69,8 +87,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(request.email())).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(request))
-                .isInstanceOf(ConflictException.class)
-                .hasMessage("Email already in use");
+                .isInstanceOf(EmailAlreadyExistsException.class);
     }
 
     // ============================================================
@@ -78,7 +95,7 @@ class AuthServiceTest {
     // ============================================================
 
     @Test
-    void login_shouldReturnToken_whenCredentialsAreValid() {
+    void login_shouldReturnTokens_whenCredentialsAreValid() {
         LoginRequest request = TestDataFactory.loginRequest();
 
         User user = User.builder()
@@ -90,11 +107,19 @@ class AuthServiceTest {
 
         when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), "hashed")).thenReturn(true);
-        when(jwtService.generateToken(user)).thenReturn("jwt-token");
+        when(jwtService.generateToken(user)).thenReturn("access-token");
+
+        when(refreshTokenRepository.save(any(RefreshToken.class)))
+                .thenAnswer(invocation -> {
+                    RefreshToken rt = invocation.getArgument(0);
+                    rt.setId(1L);
+                    return rt;
+                });
 
         AuthResponse response = authService.login(request);
 
-        assertThat(response.token()).isEqualTo("jwt-token");
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isNotNull();
         assertThat(response.email()).isEqualTo("test@example.com");
     }
 

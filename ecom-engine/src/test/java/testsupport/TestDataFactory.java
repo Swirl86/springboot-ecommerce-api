@@ -3,6 +3,7 @@ package testsupport;
 import com.swirl.ecomengine.address.Address;
 import com.swirl.ecomengine.address.dto.AddressResponse;
 import com.swirl.ecomengine.address.dto.CreateOrUpdateAddressRequest;
+import com.swirl.ecomengine.auth.RefreshToken;
 import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
@@ -46,8 +47,22 @@ public class TestDataFactory {
                 1L,
                 "test@example.com",
                 "USER",
-                "jwt-token"
+                "access-token",
+                "refresh-token"
         );
+    }
+
+    // ============================================================
+    // REFRESH TOKEN
+    // ============================================================
+
+    public static RefreshToken refreshToken(User user, String tokenValue, LocalDateTime expiresAt, boolean revoked) {
+        RefreshToken rt = new RefreshToken();
+        rt.setToken(tokenValue);
+        rt.setUser(user);
+        rt.setExpiresAt(expiresAt);
+        rt.setRevoked(revoked);
+        return rt;
     }
 
     // ============================================================
@@ -96,6 +111,16 @@ public class TestDataFactory {
         return User.builder()
                 .email(email)
                 .password(encoder.encode("password123"))
+                .name("Test User")
+                .phone("0701111111")
+                .role(Role.USER)
+                .build();
+    }
+
+    public static User userNoPassword(String email) {
+        return User.builder()
+                .email(email)
+                .password("hashed") // irrelevant for repository tests
                 .name("Test User")
                 .phone("0701111111")
                 .role(Role.USER)

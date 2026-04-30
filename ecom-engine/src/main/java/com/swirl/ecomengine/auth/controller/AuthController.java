@@ -3,6 +3,7 @@ package com.swirl.ecomengine.auth.controller;
 import com.swirl.ecomengine.auth.AuthService;
 import com.swirl.ecomengine.auth.dto.AuthResponse;
 import com.swirl.ecomengine.auth.dto.LoginRequest;
+import com.swirl.ecomengine.auth.dto.RefreshTokenRequest;
 import com.swirl.ecomengine.auth.dto.RegisterRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -51,5 +52,31 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @Operation(
+            summary = "Logout user",
+            description = "Invalidates the provided refresh token. Frontend must also remove stored access token."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Logout successful")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody RefreshTokenRequest request) {
+        authService.logout(request.refreshToken());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "Refresh access token",
+            description = "Exchanges a valid refresh token for a new access token (and a rotated refresh token)."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
+            @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
+    })
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request.refreshToken()));
     }
 }
