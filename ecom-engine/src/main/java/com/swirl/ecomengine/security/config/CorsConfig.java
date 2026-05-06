@@ -15,8 +15,8 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allowed origins
-        config.setAllowedOrigins(List.of(
+        // Use patterns instead of setAllowedOrigins (fixes Firefox + 304)
+        config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "http://localhost:5173"
         ));
