@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.address;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.swirl.ecomengine.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,5 +32,6 @@ public class Address {
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JsonBackReference
     private User user;
 }

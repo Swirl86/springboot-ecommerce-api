@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.user;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.swirl.ecomengine.address.Address;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,6 +39,7 @@ public class User {
 
     // USER ROLE ONLY
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private Address address;
 
     // ---------------------------------------------------------
