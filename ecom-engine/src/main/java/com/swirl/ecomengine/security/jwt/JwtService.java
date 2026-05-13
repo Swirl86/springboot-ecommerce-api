@@ -2,31 +2,20 @@ package com.swirl.ecomengine.security.jwt;
 
 import com.swirl.ecomengine.auth.exception.JwtValidationException;
 import com.swirl.ecomengine.user.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
 
 @Service
-@Profile({"dev", "prod", "test-integration"})
 public class JwtService {
 
     private final String secret;
     private final long expirationMs;
 
-    // ------------------------------------------------------------
-    // Constructors
-    // ------------------------------------------------------------
-
-    @Autowired
     public JwtService(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration}") long expirationMs
@@ -36,20 +25,19 @@ public class JwtService {
     }
 
     // ------------------------------------------------------------
-    // Key handling
+    // Key
     // ------------------------------------------------------------
-
     private Key signingKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
     // ------------------------------------------------------------
-    // Token generation
+    // Generate token
     // ------------------------------------------------------------
-
     public String generateToken(User user) {
         return Jwts.builder()
-                .setSubject(user.getEmail())
+                .setSubject(user.getId().toString())
+                .claim("email", user.getEmail())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
                 .setExpiration(expirationDate())
@@ -62,9 +50,41 @@ public class JwtService {
     }
 
     // ------------------------------------------------------------
-    // Token validation + claim extraction
+    // Extract userId
     // ------------------------------------------------------------
+    public Long extractUserId(String token) {
+        try {
+            return Long.valueOf(extractClaims(token).getSubject());
+        } catch (Exception e) {
+            throw new JwtValidationException("Invalid token subject", e);
+        }
+    }
 
+    // ------------------------------------------------------------
+    // Extract email
+    // ------------------------------------------------------------
+    public String extractEmail(String token) {
+        try {
+            return extractClaims(token).get("email", String.class);
+        } catch (Exception e) {
+            throw new JwtValidationException("Invalid email claim", e);
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Extract role
+    // ------------------------------------------------------------
+    public String extractRole(String token) {
+        try {
+            return extractClaims(token).get("role", String.class);
+        } catch (Exception e) {
+            throw new JwtValidationException("Invalid role claim", e);
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Validate token
+    // ------------------------------------------------------------
     public boolean validateToken(String token) {
         try {
             extractClaims(token);
@@ -74,26 +94,9 @@ public class JwtService {
         }
     }
 
-    public String extractEmail(String token) {
-        try {
-            return extractClaims(token).getSubject();
-        } catch (Exception e) {
-            throw new JwtValidationException("Invalid token subject", e);
-        }
-    }
-
-    public String extractRole(String token) {
-        try {
-            return extractClaims(token).get("role", String.class);
-        } catch (Exception e) {
-            throw new JwtValidationException("Invalid or missing role claim", e);
-        }
-    }
-
     // ------------------------------------------------------------
-    // Internal claim parsing
+    // Internal
     // ------------------------------------------------------------
-
     private Claims extractClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(signingKey())

@@ -1,6 +1,7 @@
 package com.swirl.ecomengine.security.jwt;
 
 import com.swirl.ecomengine.security.user.userdetails.CustomUserDetails;
+import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,14 +9,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 @Profile({"dev", "prod", "test-integration"})
@@ -48,21 +47,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // If already authenticated → skip
+        if (isAlreadyAuthenticated()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
+            // Validate token signature & expiration
             jwtService.validateToken(token);
 
-            String email = jwtService.extractEmail(token);
-            String role = jwtService.extractRole(token);
-
-            if (email == null || role == null || isAlreadyAuthenticated()) {
+            // Extract userId from JWT subject
+            Long userId = jwtService.extractUserId(token);
+            if (userId == null) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            userRepository.findByEmail(email).ifPresent(user -> {
-                var auth = buildAuthentication(user, role, request);
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            });
+            // Load user from database using userId
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // Build Spring Security authentication using your CustomUserDetails
+            var userDetails = new CustomUserDetails(user);
+
+            var auth = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities() // authorities come from CustomUserDetails
+            );
+
+            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(auth);
 
         } catch (Exception ignored) {
             // Invalid token → SecurityConfig handles 401
@@ -91,27 +110,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isAlreadyAuthenticated() {
         return SecurityContextHolder.getContext().getAuthentication() != null;
     }
-
-    private UsernamePasswordAuthenticationToken buildAuthentication(
-            com.swirl.ecomengine.user.User user,
-            String role,
-            HttpServletRequest request
-    ) {
-        // ------------------------------------------------------------
-        // Map JWT claim "role" - Spring Security authority "ROLE_X"
-        // ------------------------------------------------------------
-        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-
-        var userDetails = new CustomUserDetails(user);
-
-        var auth = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                authorities
-        );
-
-        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        return auth;
-    }
-
 }
