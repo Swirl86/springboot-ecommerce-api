@@ -6,6 +6,7 @@ import com.swirl.ecomengine.user.User;
 import com.swirl.ecomengine.wishlist.WishlistItem;
 import com.swirl.ecomengine.wishlist.WishlistRepository;
 import com.swirl.ecomengine.wishlist.exception.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,7 @@ public class WishlistService {
     // ---------------------------------------------------------
     // ADD TO WISHLIST
     // ---------------------------------------------------------
+    @Transactional
     public void addToWishlist(Long productId, User user) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new WishlistProductNotFoundException(productId));
@@ -60,6 +62,7 @@ public class WishlistService {
     // ---------------------------------------------------------
     // REMOVE FROM WISHLIST
     // ---------------------------------------------------------
+    @Transactional
     public void removeFromWishlist(Long productId, User user) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new WishlistProductNotFoundException(productId));
@@ -70,6 +73,7 @@ public class WishlistService {
         }
     }
 
+    @Transactional
     public void clearWishlist(User user) {
         wishlistRepository.deleteAllByUser(user);
     }
