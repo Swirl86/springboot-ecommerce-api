@@ -84,7 +84,7 @@ class CartControllerTest {
         Mockito.when(cartService.addItem(mockUser, 1L, 2)).thenReturn(cart);
 
         // Mock mapper
-        CartItemResponse itemResponse = new CartItemResponse(10L, 1L, "Laptop", 999.99, 2, 1999.98);
+        CartItemResponse itemResponse = new CartItemResponse(10L, 1L, "Laptop", "image.jpg",999.99, 2, 1999.98);
         CartResponse response = new CartResponse(1L, 1L, List.of(itemResponse), 1999.98);
 
         Mockito.when(cartMapper.toResponse(cart)).thenReturn(response);
@@ -148,7 +148,7 @@ class CartControllerTest {
 
         Mockito.when(cartService.updateItem(mockUser, 10L, 5)).thenReturn(cart);
 
-        CartItemResponse itemResponse = new CartItemResponse(10L, 1L, "Laptop", 999.99, 5, 4999.95);
+        CartItemResponse itemResponse = new CartItemResponse(10L, 1L, "Laptop", "image.jpg",999.99, 5, 4999.95);
         CartResponse response = new CartResponse(1L, 1L, List.of(itemResponse), 4999.95);
 
         Mockito.when(cartMapper.toResponse(cart)).thenReturn(response);

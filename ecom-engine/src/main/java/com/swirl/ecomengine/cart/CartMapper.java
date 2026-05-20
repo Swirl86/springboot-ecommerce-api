@@ -19,14 +19,21 @@ public class CartMapper {
                 cart.getId(),
                 cart.getUser().getId(),
                 cart.getItems().stream()
-                        .map(item -> new CartItemResponse(
-                                item.getId(),
-                                item.getProduct().getId(),
-                                item.getProduct().getName(),
-                                item.getUnitPrice(),
-                                item.getQuantity(),
-                                item.getTotalPrice()
-                        ))
+                        .map(item -> {
+                            String imageUrl = item.getProduct().getImageUrls().isEmpty()
+                                    ? null
+                                    : item.getProduct().getImageUrls().get(0);
+
+                            return new CartItemResponse(
+                                    item.getId(),
+                                    item.getProduct().getId(),
+                                    item.getProduct().getName(),
+                                    imageUrl,
+                                    item.getUnitPrice(),
+                                    item.getQuantity(),
+                                    item.getTotalPrice()
+                            );
+                        })
                         .collect(Collectors.toList()),
                 total
         );
