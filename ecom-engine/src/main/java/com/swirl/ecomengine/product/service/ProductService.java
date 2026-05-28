@@ -132,4 +132,11 @@ public class ProductService {
     public LocalDateTime getLastUpdatedFiltered(Long categoryId, Double minPrice, Double maxPrice, String query) {
         return productRepository.findLastUpdatedFiltered(categoryId, minPrice, maxPrice, query);
     }
+
+    // ---------------------------------------------------------
+    // DataSeeder helpers
+    // ---------------------------------------------------------
+    public boolean hasExistingProducts() {
+        return productRepository.count() > 0;
+    }
 }

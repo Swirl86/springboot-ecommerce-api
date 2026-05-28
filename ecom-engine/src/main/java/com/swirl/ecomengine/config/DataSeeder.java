@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("dev") // Only runs when running with --spring.profiles.active=dev
+@Profile("dev")
 public class DataSeeder implements CommandLineRunner {
 
     private final ProductService productService;
@@ -36,13 +36,21 @@ public class DataSeeder implements CommandLineRunner {
         this.productService = productService;
         this.categoryService = categoryService;
         this.authService = authService;
-        this.userService =userService;
+        this.userService = userService;
         this.cartService = cartService;
     }
 
     @Override
     public void run(String... args) {
 
+        // ---------------------------------------------------------
+        // EARLY EXIT if data exist
+        // ---------------------------------------------------------
+        if (productService.hasExistingProducts()) return;
+
+        // ---------------------------------------------------------
+        // User
+        // ---------------------------------------------------------
         var auth = authService.register(new RegisterRequest(
                 "test@gmail.com",
                 "12345678"
@@ -50,6 +58,9 @@ public class DataSeeder implements CommandLineRunner {
 
         User user = userService.getById(auth.userId());
 
+        // ---------------------------------------------------------
+        // Categories
+        // ---------------------------------------------------------
         var electronics = ensureCategory("Electronics");
         var accessories = ensureCategory("Accessories");
         var home = ensureCategory("Home & Kitchen");
@@ -57,7 +68,6 @@ public class DataSeeder implements CommandLineRunner {
         var sports = ensureCategory("Sports & Outdoors");
         var edgeTests = ensureCategory("Edge Tests");
         ensureCategory("Empty Category");
-
 
         // ---------------------------------------------------------
         // Electronics
@@ -213,17 +223,19 @@ public class DataSeeder implements CommandLineRunner {
         createProduct(
                 "Unicode Test",
                 7.99,
-                "🔥 Unicode mix test \uD83D\uDE80✨ \uD83C\uDF0D — 日本語 + 한국인 + emojis ✔\uFE0F — rendering check. 💬",
+                "🔥 Unicode mix test 🚀✨ 🌍 — 日本語 + 한국인 + emojis ✔️ — rendering check. 💬",
                 edgeTests,
                 1
         );
 
-        // -----------------------------
+        // ---------------------------------------------------------
         // Seed cart
-        // -----------------------------
+        // ---------------------------------------------------------
         cartService.addItem(user, laptopId, 3);
         cartService.addItem(user, smartphoneId, 2);
         cartService.addItem(user, tabletId, 1);
+
+        System.out.println("➡️ Dev data seeded successfully.");
     }
 
     // ---------------------------------------------------------
