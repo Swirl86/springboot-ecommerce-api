@@ -15,7 +15,8 @@ public class OrderMapper {
                         i.getProductId(),
                         i.getProductName(),
                         i.getPrice(),
-                        i.getQuantity()
+                        i.getQuantity(),
+                        i.getImageUrl()
                 ))
                 .toList();
 

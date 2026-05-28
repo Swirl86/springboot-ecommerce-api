@@ -98,6 +98,9 @@ public class OrderService {
                     .productName(cartItem.getProduct().getName())
                     .price(cartItem.getProduct().getPrice())
                     .quantity(cartItem.getQuantity())
+                    .imageUrl(
+                            cartItem.getProduct().getImageUrls().stream().findFirst().orElse("")
+                    )
                     .build();
 
             order.getItems().add(item);
