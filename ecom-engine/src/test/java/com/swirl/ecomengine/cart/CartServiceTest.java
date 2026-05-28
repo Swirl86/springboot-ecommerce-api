@@ -49,7 +49,7 @@ class CartServiceTest {
     // ---------------------------------------------------------
     @Test
     void getOrCreateCart_shouldCreateNewCartIfNoneExists() {
-        when(cartRepository.findByUser(user)).thenReturn(Optional.empty());
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
         when(cartRepository.save(any(Cart.class))).thenAnswer(inv -> inv.getArgument(0));
 
         cartService.getOrCreateCart(user);
@@ -64,7 +64,7 @@ class CartServiceTest {
     void addItem_shouldAddNewItemToCart() {
         Cart cart = new Cart(user);
 
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(cart));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         cartService.addItem(user, 1L, 2);
@@ -78,7 +78,7 @@ class CartServiceTest {
     // ---------------------------------------------------------
     @Test
     void addItem_shouldThrowProductNotFound_whenProductDoesNotExist() {
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(new Cart(user)));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(new Cart(user)));
         when(productRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> cartService.addItem(user, 999L, 2))
@@ -91,7 +91,7 @@ class CartServiceTest {
     // ---------------------------------------------------------
     @Test
     void addItem_shouldThrowBadRequest_whenQuantityIsInvalid() {
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(new Cart(user)));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(new Cart(user)));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         assertThatThrownBy(() -> cartService.addItem(user, 1L, 0))
@@ -111,7 +111,7 @@ class CartServiceTest {
         item.setId(10L);
         item.setCart(cart);
 
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(cart));
         when(cartItemRepository.findById(10L)).thenReturn(Optional.of(item));
 
         cartService.updateItem(user, 10L, 5);
@@ -124,7 +124,7 @@ class CartServiceTest {
     // ---------------------------------------------------------
     @Test
     void updateItem_shouldThrowNotFound_whenItemDoesNotExist() {
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(new Cart(user)));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(new Cart(user)));
         when(cartItemRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> cartService.updateItem(user, 999L, 5))
@@ -144,7 +144,7 @@ class CartServiceTest {
         item.setId(10L);
         item.setCart(otherUsersCart);
 
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(new Cart(user)));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(new Cart(user)));
         when(cartItemRepository.findById(10L)).thenReturn(Optional.of(item));
 
         assertThatThrownBy(() -> cartService.updateItem(user, 10L, 5))
@@ -164,7 +164,7 @@ class CartServiceTest {
         item.setId(10L);
         item.setCart(cart);
 
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(cart));
         when(cartItemRepository.findById(10L)).thenReturn(Optional.of(item));
 
         cartService.removeItem(user, 10L);
@@ -178,7 +178,7 @@ class CartServiceTest {
     // ---------------------------------------------------------
     @Test
     void removeItem_shouldThrowNotFound_whenItemDoesNotExist() {
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(new Cart(user)));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(new Cart(user)));
         when(cartItemRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> cartService.removeItem(user, 999L))
@@ -195,7 +195,7 @@ class CartServiceTest {
         cart.setId(1L);
         cart.getItems().add(new CartItem(product, 1, product.getPrice()));
 
-        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.of(cart));
 
         cartService.clearCart(user);
 
@@ -207,7 +207,7 @@ class CartServiceTest {
     // ---------------------------------------------------------
     @Test
     void clearCart_shouldThrowNotFound_whenCartDoesNotExist() {
-        when(cartRepository.findByUser(user)).thenReturn(Optional.empty());
+        when(cartRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> cartService.clearCart(user))
                 .isInstanceOf(CartNotFoundException.class)

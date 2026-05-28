@@ -42,7 +42,7 @@ public class CartService {
             throw new UnauthorizedException("User must be authenticated");
         }
 
-        return cartRepository.findByUser(user)
+        return cartRepository.findByUserId(user.getId())
                 .orElseGet(() -> cartRepository.save(new Cart(user)));
     }
 
@@ -114,7 +114,7 @@ public class CartService {
     // ---------------------------------------------------------
     @Transactional
     public Cart clearCart(User user) {
-        Cart cart = cartRepository.findByUser(user)
+        Cart cart = cartRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new CartNotFoundException(user.getId()));
         cart.getItems().clear();
         return cartRepository.save(cart);
