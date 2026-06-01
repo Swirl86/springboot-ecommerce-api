@@ -1,6 +1,7 @@
 package com.swirl.ecomengine.product;
 
 import com.swirl.ecomengine.category.Category;
+import com.swirl.ecomengine.product.tag.ProductTag;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -43,6 +44,11 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    // Optional list of tags such as SALE, NEW, PROMOTION, etc.
+    // A product can have zero or many tags.
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductTag> tags = new ArrayList<>();
+
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
@@ -57,4 +63,3 @@ public class Product {
         this.updatedAt = LocalDateTime.now();
     }
 }
-
