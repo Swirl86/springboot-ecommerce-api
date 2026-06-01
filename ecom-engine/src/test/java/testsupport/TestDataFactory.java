@@ -16,6 +16,10 @@ import com.swirl.ecomengine.order.item.OrderItem;
 import com.swirl.ecomengine.product.Product;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
+import com.swirl.ecomengine.product.dto.tag.ProductTagRequest;
+import com.swirl.ecomengine.product.dto.tag.ProductTagResponse;
+import com.swirl.ecomengine.product.tag.ProductTag;
+import com.swirl.ecomengine.product.tag.TagType;
 import com.swirl.ecomengine.user.Role;
 import com.swirl.ecomengine.user.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -329,5 +333,65 @@ public class TestDataFactory {
                 .price(product.getPrice())
                 .quantity(quantity)
                 .build();
+    }
+
+    // ============================================================
+    // PRODUCT TAG
+    // ============================================================
+
+    /**
+     * Creates a basic ProductTag entity with optional label.
+     * Useful for service tests.
+     */
+    public static ProductTag productTag(Product product, Long id, TagType type, String label) {
+        ProductTag tag = new ProductTag();
+        tag.setId(id);
+        tag.setType(type);
+        tag.setLabel(label);
+        tag.setProduct(product);
+        return tag;
+    }
+
+    /**
+     * Creates a ProductTagRequest with all optional fields available.
+     */
+    public static ProductTagRequest productTagRequest(
+            TagType type,
+            String label,
+            Double discountAmount,
+            Double discountPercent,
+            Integer promoBuyQuantity,
+            Integer promoPayQuantity
+    ) {
+        ProductTagRequest req = new ProductTagRequest();
+        req.setType(type);
+        req.setLabel(label);
+        req.setDiscountAmount(discountAmount);
+        req.setDiscountPercent(discountPercent);
+        req.setPromoBuyQuantity(promoBuyQuantity);
+        req.setPromoPayQuantity(promoPayQuantity);
+        return req;
+    }
+
+    /**
+     * Creates a minimal ProductTagRequest (only type).
+     */
+    public static ProductTagRequest productTagRequest(TagType type) {
+        return productTagRequest(type, type.name(), null, null, null, null);
+    }
+
+    /**
+     * Creates a ProductTagResponse for controller tests.
+     */
+    public static ProductTagResponse productTagResponse(
+            Long id,
+            TagType type,
+            String label
+    ) {
+        ProductTagResponse res = new ProductTagResponse();
+        res.setId(id);
+        res.setType(type);
+        res.setLabel(label);
+        return res;
     }
 }
