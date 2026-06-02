@@ -43,6 +43,7 @@ class ProductServiceTest {
         productService = new ProductService(productRepository, categoryService, productMapper);
 
         category = TestDataFactory.defaultCategory();
+        category.setId(10L);
 
         laptop = TestDataFactory.product("Laptop", 999.99, "Powerful laptop", category);
         laptop.setId(1L);
@@ -66,6 +67,8 @@ class ProductServiceTest {
         assertThat(response.name()).isEqualTo(laptop.getName());
         assertThat(response.categoryId()).isEqualTo(category.getId());
         assertThat(response.categoryName()).isEqualTo(category.getName());
+        assertThat(response.tags()).isNotNull();
+        assertThat(response.tags()).isEmpty();
     }
 
     // ------------------------------------------------------------
@@ -79,16 +82,15 @@ class ProductServiceTest {
 
         when(productRepository.findAll(pageable)).thenReturn(page);
 
-        // Act
         Page<ProductResponse> result = productService.getAllProducts(pageable);
 
-        // Assert
         assertThat(result.getContent()).hasSize(2);
         assertThat(result.getTotalElements()).isEqualTo(2);
 
         ProductResponse r1 = result.getContent().get(0);
         assertThat(r1.id()).isEqualTo(1L);
         assertThat(r1.name()).isEqualTo(laptop.getName());
+        assertThat(r1.tags()).isNotNull();
 
         verify(productRepository).findAll(pageable);
     }
@@ -98,16 +100,13 @@ class ProductServiceTest {
     // ------------------------------------------------------------
     @Test
     void getAllProducts_returnsEmptyPage_whenNoProductsExist() {
-        // Arrange
         Pageable pageable = PageRequest.of(0, 20);
         Page<Product> emptyPage = Page.empty(pageable);
 
         when(productRepository.findAll(pageable)).thenReturn(emptyPage);
 
-        // Act
         Page<ProductResponse> result = productService.getAllProducts(pageable);
 
-        // Assert
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isEqualTo(0);
 
@@ -131,13 +130,15 @@ class ProductServiceTest {
     @Test
     void createProduct_savesAndReturnsResponse() {
         when(categoryService.getById(10L)).thenReturn(category);
-
         when(productRepository.save(any(Product.class))).thenReturn(laptop);
 
         ProductResponse response = productService.createProduct(request);
 
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.categoryId()).isEqualTo(category.getId());
+
+        assertThat(response.tags()).isNotNull();
+        assertThat(response.tags()).isEmpty();
 
         verify(productRepository).save(any(Product.class));
     }
@@ -168,6 +169,8 @@ class ProductServiceTest {
         ProductResponse response = productService.createProduct(request);
 
         assertThat(response.imageUrls()).containsExactly("https://example.com/laptop.jpg");
+
+        assertThat(response.tags()).isNotNull();
     }
 
     // ------------------------------------------------------------
@@ -187,6 +190,7 @@ class ProductServiceTest {
         assertThat(response.price()).isEqualTo(123.45);
         assertThat(response.description()).isEqualTo("New desc");
         assertThat(response.imageUrls()).containsExactly("img1.jpg", "img2.jpg");
+        assertThat(response.tags()).isNotNull();
     }
 
     // ------------------------------------------------------------

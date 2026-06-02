@@ -237,6 +237,9 @@ public class TestDataFactory {
     // PRODUCT
     // ============================================================
 
+    /**
+     * Creates a Product entity with default image and no tags.
+     */
     public static Product product(String name, double price, String desc, Category category) {
         Product p = new Product();
         p.setId(null);
@@ -245,9 +248,13 @@ public class TestDataFactory {
         p.setDescription(desc);
         p.setCategory(category);
         p.setImageUrls(List.of("https://example.com/test-image.jpg"));
+        p.setTags(List.of()); // ensure non-null
         return p;
     }
 
+    /**
+     * Creates a default Product entity for tests.
+     */
     public static Product defaultProduct(Category category) {
         Product p = new Product();
         p.setId(null);
@@ -256,9 +263,13 @@ public class TestDataFactory {
         p.setDescription("Powerful laptop");
         p.setCategory(category);
         p.setImageUrls(List.of("https://example.com/laptop.jpg"));
+        p.setTags(List.of()); // ensure non-null
         return p;
     }
 
+    /**
+     * Creates a ProductRequest with valid data.
+     */
     public static ProductRequest productRequest(Long categoryId) {
         return new ProductRequest(
                 "Laptop",
@@ -269,6 +280,9 @@ public class TestDataFactory {
         );
     }
 
+    /**
+     * Creates a ProductRequest for update operations.
+     */
     public static ProductRequest updateProductRequest(Long categoryId) {
         return new ProductRequest(
                 "Updated",
@@ -279,6 +293,10 @@ public class TestDataFactory {
         );
     }
 
+    /**
+     * Creates a ProductResponse WITHOUT tags (empty list).
+     * Useful for controller tests where tags are optional.
+     */
     public static ProductResponse productResponse(Long id, Long categoryId, String categoryName) {
         return new ProductResponse(
                 id,
@@ -287,12 +305,38 @@ public class TestDataFactory {
                 "Powerful laptop",
                 categoryId,
                 categoryName,
-                List.of("https://example.com/laptop.jpg")
+                List.of("https://example.com/laptop.jpg"),
+                List.of() // tags always non-null
         );
     }
 
+    /**
+     * Creates a default ProductResponse with empty tags.
+     */
     public static ProductResponse defaultProductResponse(Long id) {
         return productResponse(id, 10L, "Electronics");
+    }
+
+    /**
+     * Creates a ProductResponse WITH tags.
+     * Useful when testing tag mapping or controller responses.
+     */
+    public static ProductResponse productResponseWithTags(
+            Long id,
+            Long categoryId,
+            String categoryName,
+            List<ProductTagResponse> tags
+    ) {
+        return new ProductResponse(
+                id,
+                "Laptop",
+                999.99,
+                "Powerful laptop",
+                categoryId,
+                categoryName,
+                List.of("https://example.com/laptop.jpg"),
+                tags != null ? tags : List.of()
+        );
     }
 
     // ============================================================

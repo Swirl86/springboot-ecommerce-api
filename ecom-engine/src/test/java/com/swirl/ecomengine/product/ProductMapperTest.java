@@ -12,13 +12,14 @@ class ProductMapperTest {
     private final ProductMapper mapper = new ProductMapper();
 
     // ---------------------------------------------------------
-    // MAP FULL PRODUCT
+    // MAP FULL PRODUCT (no tags)
     // ---------------------------------------------------------
     @Test
     void toResponse_shouldMapAllFields() {
         Category category = TestDataFactory.defaultCategory();
         category.setId(10L);
 
+        // defaultProduct() now ensures tags = empty list
         Product product = TestDataFactory.defaultProduct(category);
         product.setId(1L);
 
@@ -30,9 +31,15 @@ class ProductMapperTest {
         assertThat(dto.description()).isEqualTo(product.getDescription());
         assertThat(dto.categoryId()).isEqualTo(10L);
         assertThat(dto.categoryName()).isEqualTo(category.getName());
+
+        // images
         assertThat(dto.imageUrls()).isNotNull();
         assertThat(dto.imageUrls()).hasSize(1);
         assertThat(dto.imageUrls().get(0)).isEqualTo("https://example.com/laptop.jpg");
+
+        // tags must always be non-null and empty when product has no tags
+        assertThat(dto.tags()).isNotNull();
+        assertThat(dto.tags()).isEmpty();
     }
 
     // ---------------------------------------------------------
@@ -50,5 +57,9 @@ class ProductMapperTest {
 
         assertThat(dto.id()).isEqualTo(2L);
         assertThat(dto.description()).isNull();
+
+        // tags still must not be null
+        assertThat(dto.tags()).isNotNull();
+        assertThat(dto.tags()).isEmpty();
     }
 }

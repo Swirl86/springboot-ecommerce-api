@@ -63,7 +63,8 @@ class ProductControllerTest {
                 "Smartphone",
                 10L,
                 "Electronics",
-                List.of("https://example.com/phone.jpg")
+                List.of("https://example.com/phone.jpg"),
+                List.of()
         );
     }
 
@@ -168,7 +169,7 @@ class ProductControllerTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<ProductResponse> page = new PageImpl<>(List.of(response1), pageable, 1);
 
-        when(productService.searchProducts(any(), any(), any(), any(), any()))
+        when(productService.searchProducts(any(), any(), any(), any(), any(), any()))
                 .thenReturn(page);
 
         mvc.perform(get("/products/search?q=Laptop"))
