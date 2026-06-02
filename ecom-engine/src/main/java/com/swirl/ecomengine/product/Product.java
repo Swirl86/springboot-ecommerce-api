@@ -5,7 +5,10 @@ import com.swirl.ecomengine.product.tag.ProductTag;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,7 +17,6 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
@@ -44,7 +46,6 @@ public class Product {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    // Optional list of tags such as SALE, NEW, PROMOTION, etc.
     // A product can have zero or many tags.
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductTag> tags = new ArrayList<>();
@@ -58,8 +59,14 @@ public class Product {
         this.updatedAt = LocalDateTime.now();
     }
 
-    @PreRemove
-    public void updateTimestampBeforeDelete() {
-        this.updatedAt = LocalDateTime.now();
+    // Helper methods to maintain bidirectional relationship
+    public void addTag(ProductTag tag) {
+        tags.add(tag);
+        tag.setProduct(this);
+    }
+
+    public void removeTag(ProductTag tag) {
+        tags.remove(tag);
+        tag.setProduct(null);
     }
 }

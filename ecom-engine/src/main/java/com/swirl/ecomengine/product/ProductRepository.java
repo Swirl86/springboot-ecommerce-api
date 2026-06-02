@@ -1,11 +1,13 @@
 package com.swirl.ecomengine.product;
 
+import com.swirl.ecomengine.product.tag.TagType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     @Query("SELECT MAX(p.updatedAt) FROM Product p")
@@ -25,5 +27,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             @Param("maxPrice") Double maxPrice,
             @Param("query") String query
     );
+
+    List<Product> findAllByTags_Type(TagType type);
+
+    List<Product> findDistinctByTags_TypeIn(List<TagType> types);
+
 }
 

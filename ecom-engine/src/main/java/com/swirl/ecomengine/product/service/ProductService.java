@@ -10,6 +10,7 @@ import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.exception.ProductCategoryMismatchException;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
+import com.swirl.ecomengine.product.tag.TagType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -64,14 +65,15 @@ public class ProductService {
             Double minPrice,
             Double maxPrice,
             String searchTerm,
+            String tag,
             Pageable pageable
     ) {
-        Specification<Product> spec = Specification.where(null);
-
-        spec = spec.and(ProductSpecifications.withCategory(categoryId));
-        spec = spec.and(ProductSpecifications.withMinPrice(minPrice));
-        spec = spec.and(ProductSpecifications.withMaxPrice(maxPrice));
-        spec = spec.and(ProductSpecifications.withSearchTerm(searchTerm));
+        Specification<Product> spec = Specification
+                .where(ProductSpecifications.withCategory(categoryId))
+                .and(ProductSpecifications.withMinPrice(minPrice))
+                .and(ProductSpecifications.withMaxPrice(maxPrice))
+                .and(ProductSpecifications.withSearchTerm(searchTerm))
+                .and(ProductSpecifications.withTag(tag));
 
         return productRepository.findAll(spec, pageable)
                 .map(mapper::toResponse);
@@ -121,6 +123,24 @@ public class ProductService {
         }
         productRepository.deleteById(id);
     }
+
+    // ---------------------------------------------------------
+    // PRODUCT TAG(S)
+    // ---------------------------------------------------------
+    public List<ProductResponse> getProductsByTag(TagType tag) {
+        return productRepository.findAllByTags_Type(tag)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    public List<ProductResponse> getProductsByTags(List<TagType> types) {
+        return productRepository.findDistinctByTags_TypeIn(types)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
 
     // ---------------------------------------------------------
     // ETag helpers

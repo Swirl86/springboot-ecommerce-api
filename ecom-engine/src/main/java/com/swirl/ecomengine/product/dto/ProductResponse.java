@@ -1,5 +1,7 @@
 package com.swirl.ecomengine.product.dto;
 
+import com.swirl.ecomengine.product.dto.tag.ProductTagResponse;
+
 import java.util.List;
 
 public record ProductResponse(
@@ -9,5 +11,6 @@ public record ProductResponse(
         String description,
         Long categoryId,
         String categoryName,
-        List<String> imageUrls
+        List<String> imageUrls,
+        List<ProductTagResponse> tags
 ) {}

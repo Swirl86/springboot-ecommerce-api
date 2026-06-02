@@ -46,4 +46,13 @@ public class ProductSpecifications {
         return (root, query, cb) ->
                 cb.like(cb.lower(root.get("name")), pattern);
     }
+
+    public static Specification<Product> withTag(String tagType) {
+        if (tagType == null || tagType.isBlank()) return null;
+
+        return (root, query, cb) -> {
+            var tagsJoin = root.join("tags");
+            return cb.equal(tagsJoin.get("type"), tagType);
+        };
+    }
 }

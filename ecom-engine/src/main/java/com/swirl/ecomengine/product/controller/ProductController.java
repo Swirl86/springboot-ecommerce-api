@@ -4,6 +4,7 @@ import com.swirl.ecomengine.common.etag.EtagService;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
 import com.swirl.ecomengine.product.service.ProductService;
+import com.swirl.ecomengine.product.tag.TagType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -19,6 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Tag(name = "Products", description = "Operations related to product management")
 @RestController
@@ -101,6 +103,7 @@ public class ProductController {
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) String query,
+            @RequestParam(required = false) String tag,
             Pageable pageable
     ) {
         LocalDateTime lastUpdated = productService.getLastUpdatedFiltered(categoryId, minPrice, maxPrice, query);
@@ -112,7 +115,7 @@ public class ProductController {
                     .build();
         }
 
-        Page<ProductResponse> products = productService.searchProducts(categoryId, minPrice, maxPrice, query, pageable);
+        Page<ProductResponse> products = productService.searchProducts(categoryId, minPrice, maxPrice, query, tag, pageable);
 
         return ResponseEntity.ok()
                 .eTag(eTag)
@@ -171,5 +174,57 @@ public class ProductController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
+    }
+
+    // ---------------------------------------------------------
+    // GET PRODUCTS BY SINGLE TAG
+    // ---------------------------------------------------------
+    @Operation(
+            summary = "Get products by tag",
+            description = """
+            Returns all products that contain the specified tag.
+            
+            Useful for views such as:
+            - New arrivals (NEW)
+            - Sales (SALE)
+            - Seasonal discounts (SEASONAL)
+            - Promotions (PROMOTION)
+            - Clearance (CLEARANCE)
+            - Limited editions (LIMITED_EDITION)
+            """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Products retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid tag type")
+    })
+    @GetMapping("/tags/{tag}")
+    public List<ProductResponse> getProductsByTag(@PathVariable TagType tag) {
+        return productService.getProductsByTag(tag);
+    }
+
+    // ---------------------------------------------------------
+    // GET PRODUCTS BY MULTIPLE TAGS
+    // ---------------------------------------------------------
+    @Operation(
+            summary = "Get products matching any of the specified tags",
+            description = """
+            Returns all products that contain *any* of the provided tag types.
+            
+            Useful for broader campaign views such as:
+            - Big Sale (SALE, PROMOTION, CLEARANCE)
+            - Holiday campaigns (SEASONAL, PROMOTION)
+            - Multi‑category discount pages
+            
+            Example:
+            GET /products/tags?types=SALE,PROMOTION,CLEARANCE
+            """
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Products retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid tag list")
+    })
+    @GetMapping("/tags")
+    public List<ProductResponse> getProductsByTags(@RequestParam List<TagType> types) {
+        return productService.getProductsByTags(types);
     }
 }

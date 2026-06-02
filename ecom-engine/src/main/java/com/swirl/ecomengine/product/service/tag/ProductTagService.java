@@ -13,6 +13,8 @@ import com.swirl.ecomengine.product.tag.ProductTagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ProductTagService {
@@ -33,6 +35,30 @@ public class ProductTagService {
 
         return mapper.toResponse(tag);
     }
+
+    public List<ProductTagResponse> getTagsForProduct(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        return product.getTags().stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    public ProductTagResponse getTag(Long productId, Long tagId) {
+        Product tmp = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        ProductTag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new TagNotFoundException(tagId));
+
+        if (!tag.getProduct().getId().equals(productId)) {
+            throw new TagDoesNotBelongToProductException(productId, tagId);
+        }
+
+        return mapper.toResponse(tag);
+    }
+
 
     public void removeTagFromProduct(Long productId, Long tagId) {
         Product product = productRepository.findById(productId)
