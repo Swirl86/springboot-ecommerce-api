@@ -34,4 +34,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // ---------------------------------------------------------
     @Query(value = "SELECT * FROM orders WHERE deleted = true", nativeQuery = true)
     List<Order> findArchived();
+
+    // ---------------------------------------------------------
+    // PURCHASE CHECK (required for allowing product reviews)
+    // ---------------------------------------------------------
+    boolean existsByUserIdAndStatusInAndItemsProductId(
+            Long userId,
+            List<OrderStatus> statuses,
+            Long productId
+    );
 }

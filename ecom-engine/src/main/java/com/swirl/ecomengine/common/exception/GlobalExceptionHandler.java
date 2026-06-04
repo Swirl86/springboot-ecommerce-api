@@ -37,9 +37,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(
                 new ErrorResponse(
                         HttpStatus.BAD_REQUEST.value(),
-                        errors.toString(),
+                        "Validation failed",
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        errors
                 )
         );
     }
@@ -57,7 +58,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.BAD_REQUEST.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
@@ -75,7 +77,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.BAD_REQUEST.value(),
                         "Malformed request: " + ex.getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
@@ -93,7 +96,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.NOT_FOUND.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
@@ -108,7 +112,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.NOT_FOUND.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
@@ -126,7 +131,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.UNAUTHORIZED.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
@@ -144,7 +150,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.FORBIDDEN.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
@@ -162,12 +169,12 @@ public class GlobalExceptionHandler {
                         HttpStatus.CONFLICT.value(),
                         ex.getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
 
-    // Database-level constraint violations (unique keys, FK, etc.)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(
             DataIntegrityViolationException ex,
@@ -178,7 +185,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.CONFLICT.value(),
                         "Data integrity violation: " + ex.getMostSpecificCause().getMessage(),
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }
@@ -198,7 +206,8 @@ public class GlobalExceptionHandler {
                         HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "An unexpected error occurred",
                         LocalDateTime.now(),
-                        request.getRequestURI()
+                        request.getRequestURI(),
+                        null
                 )
         );
     }

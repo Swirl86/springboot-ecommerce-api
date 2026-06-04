@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Component
 public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
@@ -32,7 +33,8 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
                 HttpStatus.UNAUTHORIZED.value(),
                 "Unauthorized: " + authException.getMessage(),
                 LocalDateTime.now(),
-                request.getRequestURI()
+                request.getRequestURI(),
+                Map.of() // Empty error‑map
         );
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());

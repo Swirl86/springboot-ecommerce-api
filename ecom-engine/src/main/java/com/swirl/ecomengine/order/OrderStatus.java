@@ -1,5 +1,7 @@
 package com.swirl.ecomengine.order;
 
+import java.util.List;
+
 /**
  *  Represents the full lifecycle of an order in the system.
  *  <pre>
@@ -83,4 +85,10 @@ public enum OrderStatus {
     public boolean canTransitionTo(OrderStatus to) {
         return false;
     }
+
+    public static final List<OrderStatus> VALID_STATE_FOR_REVIEW = List.of(
+            COMPLETED,
+            RETURNED,
+            REFUNDED
+    );
 }
