@@ -116,15 +116,18 @@ class OrderIntegrationTest extends IntegrationTestBase {
         // Create 3 orders for the user
         Order o1 = orderRepository.save(Order.builder()
                 .user(user).totalPrice(10).createdAt(LocalDateTime.now()).build());
+        o1.setStatus(OrderStatus.COMPLETED);
 
         Order o2 = orderRepository.save(Order.builder()
                 .user(user).totalPrice(20).createdAt(LocalDateTime.now()).build());
+        o2.setStatus(OrderStatus.COMPLETED);
 
         Order o3 = orderRepository.save(Order.builder()
                 .user(user).totalPrice(30).createdAt(LocalDateTime.now()).build());
+        o3.setStatus(OrderStatus.COMPLETED);
 
         // Request page=0, size=2
-        mockMvc.perform(get("/orders?page=0&size=2")
+        mockMvc.perform(get("/orders/history?page=0&size=2")
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))

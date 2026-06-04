@@ -100,10 +100,10 @@ class OrderControllerTest {
     }
 
     // ---------------------------------------------------------
-    // GET ALL ORDERS (GET /orders)
+    // GET ORDER HISTORY (GET /orders/history)
     // ---------------------------------------------------------
     @Test
-    void getOrders_shouldReturnPaginatedOrders() throws Exception {
+    void getOrderHistory_shouldReturnPaginatedOrders() throws Exception {
         Order order = TestDataFactory.order(user);
         order.setId(200L);
         order.setStatus(OrderStatus.COMPLETED);
@@ -125,7 +125,7 @@ class OrderControllerTest {
 
         Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
 
-        mockMvc.perform(get("/orders"))
+        mockMvc.perform(get("/orders/history"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(200L))
                 .andExpect(jsonPath("$.content[0].totalPrice").value(150.00))
@@ -179,10 +179,10 @@ class OrderControllerTest {
     }
 
     // ---------------------------------------------------------
-    // GET ALL ORDERS (pagination)
+    // GET ORDER HISTORY WITH PAGINATION
     // ---------------------------------------------------------
     @Test
-    void getOrders_shouldRespectPageAndSizeParameters() throws Exception {
+    void getOrderHistory_shouldRespectPageAndSizeParameters() throws Exception {
         Order order = TestDataFactory.order(user);
         order.setId(201L);
         order.setStatus(OrderStatus.COMPLETED);
@@ -204,7 +204,7 @@ class OrderControllerTest {
 
         Mockito.when(orderMapper.toResponse(order)).thenReturn(response);
 
-        mockMvc.perform(get("/orders?page=2&size=5"))
+        mockMvc.perform(get("/orders/history?page=2&size=5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(201L))
                 .andExpect(jsonPath("$.pageable.pageNumber").value(2))
@@ -214,14 +214,14 @@ class OrderControllerTest {
     }
 
     @Test
-    void getOrders_shouldReturnEmptyPage_whenNoOrdersExist() throws Exception {
+    void getOrderHistory_shouldReturnEmptyPage_whenNoOrdersExist() throws Exception {
         Pageable pageable = PageRequest.of(0, 20);
         Page<Order> emptyPage = Page.empty(pageable);
 
         Mockito.when(orderService.getOrderHistory(eq(user), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
-        mockMvc.perform(get("/orders"))
+        mockMvc.perform(get("/orders/history"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty())
                 .andExpect(jsonPath("$.totalElements").value(0))

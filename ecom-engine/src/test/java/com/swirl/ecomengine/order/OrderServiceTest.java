@@ -198,8 +198,11 @@ class OrderServiceTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<Order> page = new PageImpl<>(List.of(o1, o2), pageable, 2);
 
-        when(orderRepository.findByUser(user, pageable))
-                .thenReturn(page);
+        when(orderRepository.findByUserAndStatusIn(
+                eq(user),
+                eq(OrderStatus.HISTORICAL_STATES),
+                eq(pageable)
+        )).thenReturn(page);
 
         Page<Order> result = orderService.getOrderHistory(user, pageable);
 
@@ -215,8 +218,11 @@ class OrderServiceTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<Order> emptyPage = Page.empty(pageable);
 
-        when(orderRepository.findByUser(user, pageable))
-                .thenReturn(emptyPage);
+        when(orderRepository.findByUserAndStatusIn(
+                eq(user),
+                eq(OrderStatus.HISTORICAL_STATES),
+                eq(pageable)
+        )).thenReturn(emptyPage);
 
         Page<Order> result = orderService.getOrderHistory(user, pageable);
 
@@ -233,13 +239,20 @@ class OrderServiceTest {
 
         Page<Order> emptyPage = Page.empty(pageable);
 
-        when(orderRepository.findByUser(user, pageable))
-                .thenReturn(emptyPage);
+        when(orderRepository.findByUserAndStatusIn(
+                eq(user),
+                eq(OrderStatus.HISTORICAL_STATES),
+                eq(pageable)
+        )).thenReturn(emptyPage);
 
         Page<Order> result = orderService.getOrderHistory(user, pageable);
 
         // Verify repository was called with EXACT pageable
-        verify(orderRepository).findByUser(user, pageable);
+        verify(orderRepository).findByUserAndStatusIn(
+                eq(user),
+                eq(OrderStatus.HISTORICAL_STATES),
+                eq(pageable)
+        );
 
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isEqualTo(0);
@@ -256,7 +269,7 @@ class OrderServiceTest {
 
         when(orderRepository.findByUserAndStatusIn(
                 eq(user),
-                eq(List.of(OrderStatus.PENDING, OrderStatus.PROCESSING))
+                eq(OrderStatus.ACTIVE_STATES)
         )).thenReturn(List.of(o1, o2));
 
         var result = orderService.getActiveOrders(user);
