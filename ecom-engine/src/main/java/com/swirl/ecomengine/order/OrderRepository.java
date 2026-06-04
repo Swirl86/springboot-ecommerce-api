@@ -14,7 +14,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // ---------------------------------------------------------
     List<Order> findByUserOrderByCreatedAtDesc(User user);
 
+    // ACTIVE
     List<Order> findByUserAndStatusIn(User user, List<OrderStatus> statuses);
+
+    // HISTORY (paginated)
+    Page<Order> findByUserAndStatusIn(User user, List<OrderStatus> statuses, Pageable pageable);
 
     Page<Order> findByUser(User user, Pageable pageable);
 

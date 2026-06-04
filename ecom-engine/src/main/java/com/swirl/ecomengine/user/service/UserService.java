@@ -4,7 +4,6 @@ import com.swirl.ecomengine.address.Address;
 import com.swirl.ecomengine.address.AddressRepository;
 import com.swirl.ecomengine.address.dto.AddressResponse;
 import com.swirl.ecomengine.common.exception.BadRequestException;
-import com.swirl.ecomengine.common.exception.ConflictException;
 import com.swirl.ecomengine.common.exception.EmailAlreadyExistsException;
 import com.swirl.ecomengine.order.OrderRepository;
 import com.swirl.ecomengine.user.User;
@@ -106,7 +105,8 @@ public class UserService {
         }
 
         // EMAIL
-        if (hasText(req.email())) {
+        if (req.email() != null && !req.email().equals(user.getEmail())) {
+
             if (userRepository.existsByEmail(req.email())) {
                 throw new EmailAlreadyExistsException();
             }
@@ -120,8 +120,7 @@ public class UserService {
 
         // PASSWORD
         if (hasText(req.newPassword())) {
-
-            if (req.currentPassword() == null || req.currentPassword().isBlank()) {
+            if (!hasText(req.currentPassword())) {
                 throw new BadRequestException("Current password is required to change password");
             }
 

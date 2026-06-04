@@ -28,7 +28,6 @@ import java.util.List;
 
 import static com.swirl.ecomengine.common.StringUtils.hasText;
 import static com.swirl.ecomengine.order.OrderStatus.PENDING;
-import static com.swirl.ecomengine.order.OrderStatus.PROCESSING;
 
 @Service
 @RequiredArgsConstructor
@@ -139,21 +138,25 @@ public class OrderService {
     }
 
     // ---------------------------------------------------------
-    // GET ORDER HISTORY (USER)
+    // GET ORDER HISTORY
     // ---------------------------------------------------------
     @Transactional(readOnly = true)
     public Page<Order> getOrderHistory(User user, Pageable pageable) {
-        return orderRepository.findByUser(user, pageable);
+        return orderRepository.findByUserAndStatusIn(
+                user,
+                OrderStatus.HISTORICAL_STATES,
+                pageable
+        );
     }
 
     // ---------------------------------------------------------
-    // GET ACTIVE ORDERS (PENDING + PROCESSING)
+    // GET ACTIVE ORDERS
     // ---------------------------------------------------------
     @Transactional(readOnly = true)
     public List<Order> getActiveOrders(User user) {
         return orderRepository.findByUserAndStatusIn(
                 user,
-                List.of(PENDING, PROCESSING)
+                OrderStatus.ACTIVE_STATES
         );
     }
 

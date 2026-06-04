@@ -59,10 +59,11 @@ public class OrderController {
     // ORDER HISTORY
     // ---------------------------------------------------------
 
-    @GetMapping
+    @GetMapping("/history")
     @Operation(
             summary = "Get order history",
-            description = "Returns a paginated list of past orders for the authenticated user, sorted by newest first."
+            description = "Returns a paginated list of historical orders for the authenticated user. " +
+                    "Historical orders include COMPLETED, CANCELLED, RETURNED, and REFUNDED."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Order history retrieved successfully"),
@@ -84,7 +85,8 @@ public class OrderController {
     @GetMapping("/active")
     @Operation(
             summary = "Get active orders",
-            description = "Returns all active orders (PENDING or PROCESSING) for the authenticated user."
+            description = "Returns all active orders for the authenticated user. " +
+                    "Active orders include PENDING, PROCESSING, SHIPPED, and RETURN_REQUESTED."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Active orders retrieved successfully"),

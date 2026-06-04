@@ -91,4 +91,18 @@ public enum OrderStatus {
             RETURNED,
             REFUNDED
     );
+
+    public static final List<OrderStatus> ACTIVE_STATES = List.of(
+            PENDING,
+            PROCESSING,
+            SHIPPED,
+            RETURN_REQUESTED
+    );
+
+    public static final List<OrderStatus> HISTORICAL_STATES = List.of(
+            COMPLETED,
+            CANCELLED,
+            RETURNED,
+            REFUNDED
+    );
 }
