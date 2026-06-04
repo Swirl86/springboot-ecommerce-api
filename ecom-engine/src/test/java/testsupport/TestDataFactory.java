@@ -16,8 +16,11 @@ import com.swirl.ecomengine.order.item.OrderItem;
 import com.swirl.ecomengine.product.Product;
 import com.swirl.ecomengine.product.dto.ProductRequest;
 import com.swirl.ecomengine.product.dto.ProductResponse;
+import com.swirl.ecomengine.product.dto.review.ProductReviewRequest;
+import com.swirl.ecomengine.product.dto.review.ProductReviewResponse;
 import com.swirl.ecomengine.product.dto.tag.ProductTagRequest;
 import com.swirl.ecomengine.product.dto.tag.ProductTagResponse;
+import com.swirl.ecomengine.product.review.ProductReview;
 import com.swirl.ecomengine.product.tag.ProductTag;
 import com.swirl.ecomengine.product.tag.TagType;
 import com.swirl.ecomengine.user.Role;
@@ -379,6 +382,19 @@ public class TestDataFactory {
                 .build();
     }
 
+    public static Order completedOrder(User user, Product product, int quantity) {
+        Order order = order(user);
+
+        OrderItem item = orderItem(order, product, quantity);
+        order.getItems().add(item);
+
+        order.updateStatus(OrderStatus.PROCESSING);
+        order.updateStatus(OrderStatus.SHIPPED);
+        order.updateStatus(OrderStatus.COMPLETED);
+
+        return order;
+    }
+
     // ============================================================
     // PRODUCT TAG
     // ============================================================
@@ -437,5 +453,99 @@ public class TestDataFactory {
         res.setType(type);
         res.setLabel(label);
         return res;
+    }
+
+    // ============================================================
+    // PRODUCT REVIEW
+    // ============================================================
+
+    /**
+     * Creates a ProductReviewRequest with rating and comment.
+     */
+    public static ProductReviewRequest productReviewRequest(int rating, String comment) {
+        return new ProductReviewRequest(rating, comment);
+    }
+
+    /**
+     * Creates a ProductReview
+     */
+    public static ProductReview productReviewWithTimeStamp(
+            Long id,
+            Product product,
+            User user,
+            int rating,
+            String comment,
+            LocalDateTime createdAt,
+            LocalDateTime lastEditedAt
+    ) {
+        ProductReview review = new ProductReview();
+        review.setId(id);
+        review.setProduct(product);
+        review.setUser(user);
+        review.setRating(rating);
+        review.setComment(comment);
+        review.setCreatedAt(createdAt);
+        review.setLastEditedAt(lastEditedAt);
+        return review;
+    }
+
+    public static ProductReview productReview(
+            Long id,
+            Product product,
+            User user,
+            int rating,
+            String comment
+    ) {
+        ProductReview review = new ProductReview();
+        review.setId(id);
+        review.setProduct(product);
+        review.setUser(user);
+        review.setRating(rating);
+        review.setComment(comment);
+        return review;
+    }
+
+    /**
+     * Creates a ProductReviewResponse representing a newly created review.
+     * Both createdAt and lastEditedAt are set to the same timestamp.
+     */
+    public static ProductReviewResponse newProductReviewResponse(
+            Long id,
+            int rating,
+            String comment,
+            String username
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+
+        return new ProductReviewResponse(
+                id,
+                rating,
+                comment,
+                username,
+                now,   // createdAt
+                now    // lastEditedAt
+        );
+    }
+
+    /**
+     * Creates a ProductReviewResponse representing an edited review.
+     * Allows specifying different timestamps for createdAt and lastEditedAt.
+     */
+    public static ProductReviewResponse editedProductReviewResponse(
+            Long id,
+            int rating,
+            String comment,
+            String username,
+            LocalDateTime createdAt,
+            LocalDateTime lastEditedAt
+    ) {
+        return new ProductReviewResponse(
+                id,
+                rating,
+                comment,
+                username,
+                createdAt,
+                lastEditedAt
+        );
     }
 }
