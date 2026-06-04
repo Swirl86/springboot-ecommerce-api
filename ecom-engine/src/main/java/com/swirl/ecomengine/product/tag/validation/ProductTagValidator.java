@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.product.validation;
+package com.swirl.ecomengine.product.tag.validation;
 
 import com.swirl.ecomengine.product.tag.TagType;
 import com.swirl.ecomengine.product.dto.tag.ProductTagRequest;

@@ -1,7 +1,7 @@
 package com.swirl.ecomengine.product.dto.tag;
 
 import com.swirl.ecomengine.product.tag.TagType;
-import com.swirl.ecomengine.product.validation.ValidProductTag;
+import com.swirl.ecomengine.product.tag.validation.ValidProductTag;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

@@ -1,4 +1,4 @@
-package com.swirl.ecomengine.product.validation;
+package com.swirl.ecomengine.product.tag.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
