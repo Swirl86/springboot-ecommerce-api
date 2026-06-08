@@ -83,6 +83,16 @@ The goal is to create a clean, modern and fully integrated full‑stack e‑comm
 
 </details>
 
+
+<details>
+  <summary><strong>Customer Experience Features</strong></summary>
+
+- Wishlist / favorites
+- Product reviews & ratings
+- Discount codes / campaign support
+
+</details>
+
 <details>
 <summary><strong>Cart Domain</strong></summary>
 
@@ -187,9 +197,6 @@ http://localhost:8080/swagger-ui.html
 <details>
   <summary><strong>Customer Experience Features</strong></summary>
 
-- Wishlist / favorites
-- Product reviews & ratings
-- Discount codes / campaign support
 - Inventory management (stock levels, reservations)
 
 </details>
