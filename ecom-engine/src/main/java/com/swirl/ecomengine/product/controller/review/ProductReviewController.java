@@ -90,6 +90,34 @@ public class ProductReviewController {
     ) {
         return reviewService.getAverageRating(productId);
     }
+
+    // ---------------------------------------------------------
+    // UPDATE REVIEW
+    // ---------------------------------------------------------
+    @PutMapping("/{reviewId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "Edit your own review",
+            description = "Allows the authenticated user to edit their own review. Rating and comment can be updated."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Review updated successfully"),
+            @ApiResponse(responseCode = "403", description = "User does not own this review"),
+            @ApiResponse(responseCode = "404", description = "Review not found")
+    })
+    public ProductReviewResponse updateReview(
+            @Parameter(description = "ID of the product", required = true)
+            @PathVariable Long productId,
+
+            @Parameter(description = "ID of the review to edit", required = true)
+            @PathVariable Long reviewId,
+
+            @AuthenticatedUser User user,
+
+            @Valid @RequestBody ProductReviewRequest request
+    ) {
+        return reviewService.updateReview(productId, reviewId, user, request);
+    }
 }
 
 

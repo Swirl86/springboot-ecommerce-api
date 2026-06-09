@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductReviewRepository extends JpaRepository<ProductReview, Long> {
 
@@ -14,5 +15,7 @@ public interface ProductReviewRepository extends JpaRepository<ProductReview, Lo
 
     @Query("SELECT AVG(r.rating) FROM ProductReview r WHERE r.product.id = :productId")
     Double findAverageRating(@Param("productId") Long productId);
+
+    Optional<ProductReview> findByIdAndProductId(Long reviewId, Long productId);
 }
 

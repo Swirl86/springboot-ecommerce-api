@@ -2,10 +2,12 @@ package com.swirl.ecomengine.product.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swirl.ecomengine.common.exception.BadRequestException;
+import com.swirl.ecomengine.common.exception.ForbiddenException;
 import com.swirl.ecomengine.product.controller.review.ProductReviewController;
 import com.swirl.ecomengine.product.dto.review.ProductReviewRequest;
 import com.swirl.ecomengine.product.dto.review.ProductReviewResponse;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
+import com.swirl.ecomengine.product.exception.ReviewNotFoundException;
 import com.swirl.ecomengine.product.service.review.ProductReviewService;
 import com.swirl.ecomengine.security.user.AuthenticatedUserArgumentResolver;
 import com.swirl.ecomengine.user.User;
@@ -154,6 +156,64 @@ class ProductReviewControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Product with id 999 not found"));
     }
+
+    // ============================================================
+    // PUT /products/{productId}/reviews/{reviewId}
+    // ============================================================
+
+    @Test
+    void updateReview_shouldReturn200_whenReviewIsUpdated() throws Exception {
+        ProductReviewResponse updated = TestDataFactory.newProductReviewResponse(
+                1L, 4, "Updated comment", "Alice"
+        );
+
+        when(reviewService.updateReview(eq(1L), eq(10L), any(User.class), any()))
+                .thenReturn(updated);
+
+        ProductReviewRequest updateRequest =
+                TestDataFactory.productReviewRequest(4, "Updated comment");
+
+        mvc.perform(put("/products/1/reviews/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.rating").value(4))
+                .andExpect(jsonPath("$.comment").value("Updated comment"))
+                .andExpect(jsonPath("$.createdAt").exists())
+                .andExpect(jsonPath("$.lastEditedAt").exists());
+    }
+
+    @Test
+    void updateReview_shouldReturn403_whenUserDoesNotOwnReview() throws Exception {
+        when(reviewService.updateReview(eq(1L), eq(10L), any(User.class), any()))
+                .thenThrow(new ForbiddenException("You can only edit your own review"));
+
+        ProductReviewRequest updateRequest =
+                TestDataFactory.productReviewRequest(4, "Updated comment");
+
+        mvc.perform(put("/products/1/reviews/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(updateRequest)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("You can only edit your own review"));
+    }
+
+    @Test
+    void updateReview_shouldReturn404_whenReviewNotFound() throws Exception {
+        when(reviewService.updateReview(eq(1L), eq(10L), any(User.class), any()))
+                .thenThrow(new ReviewNotFoundException());
+
+        ProductReviewRequest updateRequest =
+                TestDataFactory.productReviewRequest(4, "Updated comment");
+
+        mvc.perform(put("/products/1/reviews/10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(updateRequest)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Review not found"));
+    }
+
 
     // ============================================================
     // ERROR HANDLING

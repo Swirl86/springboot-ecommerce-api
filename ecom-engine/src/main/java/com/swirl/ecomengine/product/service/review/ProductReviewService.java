@@ -1,5 +1,6 @@
 package com.swirl.ecomengine.product.service.review;
 
+import com.swirl.ecomengine.common.exception.ForbiddenException;
 import com.swirl.ecomengine.order.OrderRepository;
 import com.swirl.ecomengine.order.OrderStatus;
 import com.swirl.ecomengine.product.Product;
@@ -8,6 +9,7 @@ import com.swirl.ecomengine.product.dto.review.ProductReviewRequest;
 import com.swirl.ecomengine.product.dto.review.ProductReviewResponse;
 import com.swirl.ecomengine.product.exception.ProductNotFoundException;
 import com.swirl.ecomengine.product.exception.ReviewNotAllowedException;
+import com.swirl.ecomengine.product.exception.ReviewNotFoundException;
 import com.swirl.ecomengine.product.review.ProductReview;
 import com.swirl.ecomengine.product.review.ProductReviewMapper;
 import com.swirl.ecomengine.product.review.ProductReviewRepository;
@@ -91,5 +93,23 @@ public class ProductReviewService {
     public double getAverageRating(Long productId) {
         Double avg = reviewRepository.findAverageRating(productId);
         return avg != null ? avg : 0.0;
+    }
+
+    // ---------------------------------------------------------
+    // UPDATE RATING FOR A PRODUCT
+    // ---------------------------------------------------------
+    public ProductReviewResponse updateReview(Long productId, Long reviewId, User user, ProductReviewRequest request) {
+
+        ProductReview review = reviewRepository.findByIdAndProductId(reviewId, productId)
+                .orElseThrow(ReviewNotFoundException::new);
+
+        if (!review.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException("You can only edit your own review");
+        }
+
+        review.setRating(request.rating());
+        review.setComment(request.comment());
+
+        return mapper.toResponse(reviewRepository.save(review));
     }
 }

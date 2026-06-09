@@ -196,4 +196,79 @@ class ProductReviewServiceTest {
 
         assertThat(avg).isEqualTo(0.0);
     }
+
+    // ------------------------------------------------------------
+// updateReview — updates review successfully
+// ------------------------------------------------------------
+    @Test
+    void updateReview_updatesReviewSuccessfully() {
+        ProductReviewRequest request =
+                TestDataFactory.productReviewRequest(4, "Updated comment");
+
+        ProductReview existing = TestDataFactory.productReview(
+                10L, product, testUser, 5, "Old comment"
+        );
+
+        ProductReview saved = TestDataFactory.productReview(
+                10L, product, testUser, 4, "Updated comment"
+        );
+
+        ProductReviewResponse response =
+                TestDataFactory.newProductReviewResponse(10L, 4, "Updated comment", "user@example.com");
+
+        when(reviewRepository.findByIdAndProductId(10L, 1L))
+                .thenReturn(Optional.of(existing));
+
+        when(reviewRepository.save(any(ProductReview.class)))
+                .thenReturn(saved);
+
+        when(mapper.toResponse(saved)).thenReturn(response);
+
+        ProductReviewResponse result =
+                service.updateReview(1L, 10L, testUser, request);
+
+        assertThat(result.id()).isEqualTo(10L);
+        assertThat(result.rating()).isEqualTo(4);
+        assertThat(result.comment()).isEqualTo("Updated comment");
+    }
+
+    // ------------------------------------------------------------
+    // updateReview — throws when review not found
+    // ------------------------------------------------------------
+    @Test
+    void updateReview_throwsWhenReviewNotFound() {
+        ProductReviewRequest request =
+                TestDataFactory.productReviewRequest(4, "Updated");
+
+        when(reviewRepository.findByIdAndProductId(10L, 1L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                service.updateReview(1L, 10L, testUser, request)
+        ).isInstanceOf(NotFoundException.class);
+    }
+
+    // ------------------------------------------------------------
+    // updateReview — throws when user does not own review
+    // ------------------------------------------------------------
+    @Test
+    void updateReview_throwsWhenUserDoesNotOwnReview() {
+        ProductReviewRequest request =
+                TestDataFactory.productReviewRequest(4, "Updated");
+
+        User otherUser = TestDataFactory.user(pwd -> "encoded");
+        otherUser.setId(99L);
+
+        ProductReview existing = TestDataFactory.productReview(
+                10L, product, otherUser, 5, "Old comment"
+        );
+
+        when(reviewRepository.findByIdAndProductId(10L, 1L))
+                .thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() ->
+                service.updateReview(1L, 10L, testUser, request)
+        ).isInstanceOf(com.swirl.ecomengine.common.exception.ForbiddenException.class)
+                .hasMessage("You can only edit your own review");
+    }
 }
